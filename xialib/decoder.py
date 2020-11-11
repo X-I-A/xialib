@@ -10,7 +10,7 @@ __all__ = ['Decoder']
 
 class Decoder(metaclass=abc.ABCMeta):
     def __init__(self):
-        self.support_encodes = []
+        self.supported_encodes = []
         self.logger = logging.getLogger("Xeed.Decoder")
         formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
                                       ':%(message)s')
@@ -51,20 +51,40 @@ class Decoder(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _encode_to_blob(self, data_or_io, from_encode, **kwargs):
+        """ To be implemented function
+
+        The function to be implemented by customized encoder.
+
+        Args:
+            data_or_io (:obj:`io.BufferedIOBase` or :obj:`bytes`): data to be decoded
+            from_encode (str): source encode
+
+        Returns:
+            :obj:`io.BufferedIOBase` or :obj:`bytes`
+
+        Note:
+            Use :obj:`io.BufferedIOBase` if it is possible
+        """
         raise NotImplementedError  # pragma: no cover
 
     def decoder(self, data_or_io, from_encode, to_encode, **kwargs):
+        """ Public function
+
+        This function can decode data or io flow into requested encode.
+        If to_encode is ``blob``, deocder will try to keep the :obj:`io.BufferedIOBase` as output.
+
+        Args:
+            data_or_io (:obj:`io.BufferedIOBase` or :obj:`str` or :obj:`bytes`): data to be decoded
+            from_encode (str): source encode
+            to_encode (str): target encode
+
+        Returns:
+            data (:obj:`io.BufferedIOBase` or :obj:`bytes`)
         """
-        Decode data to the the final encode
-        final encode must be one of [gzip, b64g, flat, blob]
-        :param data:
-        :param encode:
-        :return:
-        """
-        if len(self.support_encodes) == 0:
+        if len(self.supported_encodes) == 0:
             raise NotImplementedError  # pragma: no cover
 
-        if from_encode not in self.support_encodes:
+        if from_encode not in self.supported_encodes:
             self.logger.error("Decoder of {} not found at {}".format(from_encode, self.__class__.__name__))
             raise XIADecodeError("XIA-000007")
 

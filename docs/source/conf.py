@@ -18,7 +18,7 @@ sys.path.insert(0, os.path.abspath(os.path.join('..', '..')))
 # -- Project information -----------------------------------------------------
 
 project = 'xialib'
-copyright = '2020, soral'
+copyright = '2020, x-i-a.com'
 author = 'soral'
 
 # The full version, including alpha/beta/rc tags

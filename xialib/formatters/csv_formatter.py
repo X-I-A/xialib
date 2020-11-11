@@ -6,6 +6,9 @@ from ..formatter import Formatter
 
 
 class CSVFormatter(Formatter):
+    """
+    Supported data format: ``csv``
+    """
     def __init__(self):
         super().__init__()
         self.support_formats = ['csv']

@@ -5,6 +5,9 @@ from ..exceptions import XIAFormatError
 
 
 class BasicFormatter(Formatter):
+    """
+    Supported data formats: ``list``, ``record``
+    """
     def __init__(self):
         super().__init__()
         self.support_formats = ['list', 'record']

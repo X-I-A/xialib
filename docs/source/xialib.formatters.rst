@@ -1,10 +1,11 @@
 Formatters
 ==========
 
-Decoder Base Class
-------------------
+Formatter Base Class
+--------------------
 .. autoclass::  xialib.formatter.Formatter
    :members:
+   :private-members:
 
 Basic Formatter
 ---------------
