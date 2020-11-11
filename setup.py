@@ -22,7 +22,7 @@ def get_version(rel_path):
 
 setuptools.setup(
     name="xialib",
-    version=get_version("xialib/__init__.py"),
+    version=get_version(os.path.join("xialib","__init__.py")),
     author="Soral",
     author_email="soral@x-i-a.com",
     description="X-I-A Library",

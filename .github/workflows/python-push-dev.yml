@@ -38,6 +38,3 @@ jobs:
         file: ./tests/coverage.xml
         flags: unittests
         name: codecov-xialib
-        verbose: true
-
-
