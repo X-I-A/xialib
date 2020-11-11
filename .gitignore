@@ -2,6 +2,9 @@
 tests/debug/
 tests/big_input/
 
+# Sphinx
+docs/build/
+
 # Pycharm
 .idea/
 
