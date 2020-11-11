@@ -1,6 +1,9 @@
 from xialib.translator import Translator
 
 class BasicTranslator(Translator):
+    """
+    Supported data specification in the case of no `data_spec` specified or type ``x-i-a``
+    """
     def __init__(self):
         super().__init__()
         self.spec_list = ['x-i-a']

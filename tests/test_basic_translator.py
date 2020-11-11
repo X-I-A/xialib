@@ -46,4 +46,3 @@ def test_exceptions(translator):
     with pytest.raises(NotImplementedError):
         for line in header['data']:
             result_line = translator.get_translated_line(line)
-            assert result_line == line

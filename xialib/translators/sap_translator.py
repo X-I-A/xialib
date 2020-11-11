@@ -1,6 +1,9 @@
 from xialib.translator import Translator
 
 class SapTranslator(Translator):
+    """
+    Supported data formats: ``slt``, ``ddic``
+    """
     def __init__(self):
         super().__init__()
         self.spec_list = ['slt', 'ddic']
