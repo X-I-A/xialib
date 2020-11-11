@@ -9,5 +9,6 @@ Basic Units
 
    xialib.decoders
    xialib.formatters
+   xialib.publishers
    xialib.storers
    xialib.translators
