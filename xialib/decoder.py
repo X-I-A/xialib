@@ -11,7 +11,7 @@ __all__ = ['Decoder']
 class Decoder(metaclass=abc.ABCMeta):
     def __init__(self):
         self.supported_encodes = []
-        self.logger = logging.getLogger("Xeed.Decoder")
+        self.logger = logging.getLogger("XIA.Decoder")
         formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
                                       ':%(message)s')
         console_handler = logging.StreamHandler()
