@@ -2,7 +2,7 @@ name: push-dev
 
 on:
   push:
-    branches: [ develop ]
+    branches: [ master ]
 
 jobs:
   build:
@@ -10,7 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     strategy:
       matrix:
-        python-version: [3.5]
+        python-version: [3.5, 3.6, 3.7, 3.8]
 
     steps:
     - uses: actions/checkout@v2
@@ -39,5 +39,3 @@ jobs:
         flags: unittests
         name: codecov-xialib
         verbose: true
-
-
