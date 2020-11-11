@@ -18,16 +18,31 @@ class Formatter(metaclass=abc.ABCMeta):
 
     @abc.abstractmethod
     def _format_to_record(self, data_or_io, from_format, **kwargs):
-        """
-        Format data to record format
-        Input must be decoded to 'flat' or 'BufferedIO'
-        :param data:
-        :param format:
-        :return:
+        """ To be implemented function
+
+        The function to be implemented by customized formatter.
+
+        Args:
+            data_or_io (:obj:`io.BufferedIOBase` or :obj:`bytes`): data to be decoded
+            from_format (str): source format
+
+        Yields:
+            :obj:`list` of :obj:`dict`
         """
         raise NotImplementedError  # pragma: no cover
 
     def formatter(self, data_or_io, from_format, **kwargs):
+        """ Public function
+
+        This function can format data or io flow into python dictionary data.
+
+        Args:
+            data_or_io (:obj:`io.BufferedIOBase` or :obj:`bytes`): data to be decoded
+            from_format (str): source format
+
+        Yields:
+            :obj:`dict`
+        """
         if not data_or_io:
             self.logger.warning("No data or IO found at {}".format(self.__class__.__name__))
             raise XIAFormatError("XIA-000010")

@@ -1,13 +1,16 @@
 import io
 import zipfile
 from xialib.exceptions import XIADecodeError
-from ..decoder import Decoder
+from xialib.decoder import Decoder
 
 
 class ZipDecoder(Decoder):
+    """
+    Supported data encode: ``zip``
+    """
     def __init__(self):
         super().__init__()
-        self.support_encodes = ['zip']
+        self.supported_encodes = ['zip']
 
     def _encode_to_blob(self, data_or_io, from_encode, **kwargs):
         # IO to IO

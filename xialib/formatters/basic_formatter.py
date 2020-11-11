@@ -1,10 +1,13 @@
 import io
 import json
-from ..formatter import Formatter
-from ..exceptions import XIAFormatError
+from xialib.formatter import Formatter
+from xialib.exceptions import XIAFormatError
 
 
 class BasicFormatter(Formatter):
+    """
+    Supported data formats: ``list``, ``record``
+    """
     def __init__(self):
         super().__init__()
         self.support_formats = ['list', 'record']
