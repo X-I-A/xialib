@@ -1,4 +1,4 @@
-from .basic_decoder import BasicDecoder
-from .zip_decoder import ZipDecoder
+from xialib.decoders.basic_decoder import BasicDecoder
+from xialib.decoders.zip_decoder import ZipDecoder
 
 __all__ = ['BasicDecoder', 'ZipDecoder']

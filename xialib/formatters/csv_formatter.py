@@ -2,7 +2,7 @@ import io
 import csv
 import codecs
 from xialib.exceptions import XIAFormatError
-from ..formatter import Formatter
+from xialib.formatter import Formatter
 
 
 class CSVFormatter(Formatter):

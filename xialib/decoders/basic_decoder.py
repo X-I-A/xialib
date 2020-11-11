@@ -1,6 +1,6 @@
 import io
 import gzip
-from ..decoder import Decoder
+from xialib.decoder import Decoder
 
 
 class BasicDecoder(Decoder):

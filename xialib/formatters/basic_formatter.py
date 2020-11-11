@@ -1,7 +1,7 @@
 import io
 import json
-from ..formatter import Formatter
-from ..exceptions import XIAFormatError
+from xialib.formatter import Formatter
+from xialib.exceptions import XIAFormatError
 
 
 class BasicFormatter(Formatter):

@@ -1,7 +1,7 @@
 import io
 import zipfile
 from xialib.exceptions import XIADecodeError
-from ..decoder import Decoder
+from xialib.decoder import Decoder
 
 
 class ZipDecoder(Decoder):
