@@ -4,12 +4,11 @@ import gzip
 import base64
 import pytest
 from xialib import BasicPublisher
-from xialib.exceptions import XIADataSpecError
 
 data_1 = [{'_AGE': 2, 'MANDT': '100', 'BUKRS': '1001', 'NAME': 'Sébastien & Co'}]
 gzdata_1 = gzip.compress(json.dumps(data_1, ensure_ascii=False).encode())
 header_1 = {'age': 2, 'data_format': 'record', 'data_spec': 'x-i-a', 'data_encode': 'gzip'}
-header_2 = {'age': 2, 'data_format': 'record', 'data_encode': 'gzip'}
+header_2 = header_1.copy()
 header_3 = {'age': 2, 'data_format': 'record', 'data_spec': 'x-i-a', 'data_encode': 'gzip',
             'merged_data': [1, 2, 3, 4, 5],
             'encrypted_data': {'user': 'hello', 'password': 'world'}}
@@ -38,5 +37,12 @@ def test_complex_header(publisher):
     os.remove(filename)
 
 def test_exceptions(publisher):
-    with pytest.raises(XIADataSpecError):
+    header_2['data_encode'] = 'zip'
+    with pytest.raises(ValueError):
+        filename = publisher.publish(os.path.join('.', 'input'), 'module_specific', header_2, gzdata_1)
+    header_2['data_format'] = 'list'
+    with pytest.raises(ValueError):
+        filename = publisher.publish(os.path.join('.', 'input'), 'module_specific', header_2, gzdata_1)
+    header_2['data_spec'] = 'slt'
+    with pytest.raises(ValueError):
         filename = publisher.publish(os.path.join('.', 'input'), 'module_specific', header_2, gzdata_1)

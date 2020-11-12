@@ -21,7 +21,7 @@ class SapTranslator(Translator):
             line['_OP'] = line.pop('IUUT_OPERAT_FLAG')
         return line
 
-    def init_translator(self, header: dict, data: list):
+    def compile(self, header: dict, data: list):
         if header['data_spec'] == 'slt':
             self.translate_method = self._get_slt_line
         elif header['data_spec'] == 'ddic':

@@ -1,7 +1,6 @@
 import os
 import pytest
 from xialib import CSVFormatter
-from xialib.exceptions import XIAFormatError
 
 with open(os.path.join('.', 'input', 'module_specific', 'formatter', 'person_simple.csv'), 'rb') as f:
     simple_csv = f.read()
@@ -33,6 +32,6 @@ def test_io_csv(formatter):
 
 
 def test_exceptions(formatter):
-    with pytest.raises(XIAFormatError):
+    with pytest.raises(TypeError):
         for record in formatter.formatter('a;b;c', 'csv'):
             break  # pragma: no cover

@@ -3,12 +3,12 @@ import json
 import base64
 import logging
 from typing import Union
-from xialib.exceptions import XIADataSpecError
 
 __all__ = ['Publisher']
 
+
 class Publisher(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.store_types = []
         self.blob_support = True
         self.logger = logging.getLogger("XIA.Publisher")
@@ -25,6 +25,7 @@ class Publisher(metaclass=abc.ABCMeta):
                 header[key] = str(value)
 
         if not self.blob_support:
+            header['data_encode'] = 'b64g'
             data = base64.b64encode(data).decode()
 
         return header, data
@@ -63,9 +64,11 @@ class Publisher(metaclass=abc.ABCMeta):
         Returns:
             :obj:`str` : Message ID
         """
-        if header.get('data_spec', '') != 'x-i-a' \
-                or header.get('data_format', '') != 'record' \
-                or header.get('data_encode', '') != 'gzip':
-            raise XIADataSpecError("XIA-000002")
+        if header.get('data_spec', '') != 'x-i-a':
+            raise ValueError("XIA-000007")
+        if header.get('data_format', '') != 'record':
+            raise ValueError("XIA-000008")
+        if header.get('data_encode', '') != 'gzip':
+            raise ValueError("XIA-000009")
         header, data = self._preapare(header, data)
         return self._send(destination, topic_id, header, data)

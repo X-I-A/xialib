@@ -1,12 +1,13 @@
 import abc
 import io
 import logging
+from typing import Union
 
 __all__ = ['Storer']
 
 
 class Storer(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.store_types = []
         self.logger = logging.getLogger("XIA.Storer")
         formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
@@ -44,7 +45,7 @@ class Storer(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def write(self, data_or_io, location: str) -> str:
+    def write(self, data_or_io: Union[io.BufferedIOBase, bytes], location: str) -> str:
         """ To be implemented function
 
         The function to be implemented by customized storer to write to the location

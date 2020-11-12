@@ -4,8 +4,10 @@ import datetime
 from xialib.publisher import Publisher
 
 class BasicPublisher(Publisher):
-    """
-    A local file system based publisher
+    """A local file system based publisher
+
+    Data is saved to path of (destination->topic_id->current_timestamp ).
+    all content is dumped to a json file. Because the json do not support blob, the data part is base64 encoded
     """
     def __init__(self):
         super().__init__()

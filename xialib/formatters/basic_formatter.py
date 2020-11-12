@@ -1,7 +1,6 @@
 import io
 import json
 from xialib.formatter import Formatter
-from xialib.exceptions import XIAFormatError
 
 
 class BasicFormatter(Formatter):
@@ -18,7 +17,7 @@ class BasicFormatter(Formatter):
         line_nbs = [len(value) for key, value in data.items()]
         if len(set(line_nbs)) > 1:
             self.logger.error("list must have identical line numbers")
-            raise XIAFormatError("XIA-000008")
+            raise ValueError("XIA-000006")
         return [{key: value[i] for key, value in data.items() if value[i] is not None} for i in range(line_nbs[0])]
 
     def _format_to_record(self, data_or_io, from_format, **kwargs):

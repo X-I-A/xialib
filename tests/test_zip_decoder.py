@@ -3,7 +3,6 @@ import json
 import pytest
 
 from xialib import ZipDecoder
-from xialib.exceptions import XIADecodeError
 
 
 @pytest.fixture(scope='module')
@@ -42,6 +41,6 @@ def test_io_io_flow(decoder):
 
 
 def test_exceptions(decoder):
-    with pytest.raises(XIADecodeError):
+    with pytest.raises(TypeError):
         for conent in decoder.decoder('KO', 'zip', 'flat'):
             break  # pragma: no cover

@@ -1,11 +1,12 @@
 import abc
 import logging
+from typing import List
 
 __all__ = ['Translator']
 
 
 class Translator(metaclass=abc.ABCMeta):
-    def __init__(self):
+    def __init__(self, **kwargs):
         self.spec_list = list()
         self.translate_method = None
         self.logger = logging.getLogger("XIA.Translator")
@@ -16,7 +17,7 @@ class Translator(metaclass=abc.ABCMeta):
         self.logger.addHandler(console_handler)
 
     @abc.abstractmethod
-    def init_translator(self, header: dict, data: list):
+    def compile(self, header: dict, data: List[dict]):
         """ To be implemented function
 
         The function to be implemented by customized translator to set the `translate_method` to the correct

@@ -16,14 +16,14 @@ def translator():
     yield translator
 
 def test_init_load_header(translator):
-    translator.init_translator(slt_init_header, slt_init_header['data'])
+    translator.compile(slt_init_header, slt_init_header['data'])
     for line in slt_init_header['data']:
         result_line = translator.get_translated_line(line, age=2)
         assert result_line['_AGE'] == 2
         assert '_RECNO' not in result_line
 
 def test_transfer_header(translator):
-    translator.init_translator(slt_transfer_header, slt_transfer_header['data'])
+    translator.compile(slt_transfer_header, slt_transfer_header['data'])
     for line in slt_transfer_header['data']:
         result_line = translator.get_translated_line(line, age=2)
         assert result_line['_AGE'] == 2
@@ -31,7 +31,7 @@ def test_transfer_header(translator):
         assert '_OP' in result_line
 
 def test_ddic_header(translator):
-    translator.init_translator(ddic_header, ddic_header['data'])
+    translator.compile(ddic_header, ddic_header['data'])
     for line in ddic_header['data']:
         result_line = translator.get_translated_line(line)
         assert result_line == line
