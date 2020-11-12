@@ -1,0 +1,1 @@
+{"age": "2", "data_format": "record", "data_spec": "x-i-a", "data_encode": "b64g", "merged_data": [1, 2, 3, 4, 5], "encrypted_data": {"user": "hello", "password": "world"}, "data": "H4sIADlirV8C/4uuVop3dHdVslIw0lFQ8nX0cwkBspUMDQyUgHynUO+gYCjfECTg5+gLUqsUfHhlUmJxSWZqnoKagnO+Um0sADwQ1YtJAAAA"}
