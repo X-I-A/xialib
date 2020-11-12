@@ -19,25 +19,25 @@ def translator():
     yield translator
 
 def test_simple_header(translator):
-    translator.init_translator(header, header['data'])
+    translator.compile(header, header['data'])
     for line in header['data']:
         result_line = translator.get_translated_line(line)
         assert result_line == line
 
 def test_xia_body(translator):
-    translator.init_translator(xia_header, xia_header['data'])
+    translator.compile(xia_header, xia_header['data'])
     for line in xia_header['data']:
         result_line = translator.get_translated_line(line)
         assert result_line == line
 
 def test_aged_body(translator):
-    translator.init_translator(age_header, age_header['data'])
+    translator.compile(age_header, age_header['data'])
     for line in age_header['data']:
         result_line = translator.get_translated_line(line, age=age_header['age'])
         assert result_line['_AGE'] == 2
 
 def test_normal_body(translator):
-    translator.init_translator(normal_header, normal_header['data'])
+    translator.compile(normal_header, normal_header['data'])
     for line in normal_header['data']:
         result_line = translator.get_translated_line(line, start_seq=normal_header['start_seq'])
         assert result_line['_SEQ'] == '2020111119150000000'

@@ -1,6 +1,5 @@
 import io
 import zipfile
-from xialib.exceptions import XIADecodeError
 from xialib.decoder import Decoder
 
 
@@ -26,4 +25,4 @@ class ZipDecoder(Decoder):
                 yield archive.read(file)
         else:
             self.logger.error("Data type {} not supported".format(data_or_io.__class__.__name__))
-            raise XIADecodeError("XED-000007")
+            raise TypeError("XIA-000002")

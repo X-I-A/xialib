@@ -1,7 +1,6 @@
 import io
 import csv
 import codecs
-from xialib.exceptions import XIAFormatError
 from xialib.formatter import Formatter
 
 
@@ -20,7 +19,7 @@ class CSVFormatter(Formatter):
         elif isinstance(data_or_io, bytes):
             reader_io = io.StringIO(data_or_io.decode())
         else:
-            raise XIAFormatError("XIA-000010")  # pragma: no cover
+            raise TypeError("XIA-000002")  # pragma: no cover
         counter, chunk = 0, list()
         dialect = csv.Sniffer().sniff(reader_io.read(4096))
         reader_io.seek(0)

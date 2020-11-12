@@ -3,8 +3,7 @@ import os
 from xialib.storer import Storer
 
 class BasicStorer(Storer):
-    """
-    Location file system based storer
+    """Local file system based storer
     """
     def __init__(self):
         super().__init__()

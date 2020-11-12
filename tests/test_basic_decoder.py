@@ -3,7 +3,6 @@ import codecs
 import json
 import pytest
 from xialib import BasicDecoder
-from xialib.exceptions import XIADecodeError
 
 content_dict = dict()
 with open(os.path.join('.', 'input', 'module_specific', 'decoder', 'person_simple.gzip'), 'rb') as f:
@@ -79,12 +78,12 @@ def test_io_blob_flow(decoder):
 
 
 def test_exceptions(decoder):
-    with pytest.raises(XIADecodeError):
+    with pytest.raises(ValueError):
         for conent in decoder.decoder(content_dict['flat'], 'gzip', 'zip'):
             break  # pragma: no cover
-    with pytest.raises(XIADecodeError):
+    with pytest.raises(TypeError):
         for conent in decoder.decoder(content_dict['flat'], 'zip', 'gzip'):
             break  # pragma: no cover
-    with pytest.raises(XIADecodeError):
+    with pytest.raises(TypeError):
         for conent in decoder.decoder(['KO'], 'blob', 'flat'):
             break  # pragma: no cover

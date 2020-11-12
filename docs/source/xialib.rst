@@ -9,5 +9,15 @@ Basic Units
 
    xialib.decoders
    xialib.formatters
+   xialib.publishers
    xialib.storers
+   xialib.subscriber
    xialib.translators
+
+
+Dictionary
+----------
+.. toctree::
+   :maxdepth: 2
+
+   xialib.errors

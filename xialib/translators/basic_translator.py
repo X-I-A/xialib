@@ -22,7 +22,7 @@ class BasicTranslator(Translator):
         line['_SEQ'] = kwargs['start_seq']
         return line
 
-    def init_translator(self, header: dict, data: list):
+    def compile(self, header: dict, data: list):
         if header.get('data_spec', '') == 'x-i-a':
             self.translate_method = self._get_origin_line
         elif int(header.get('age', 0)) == 1:
