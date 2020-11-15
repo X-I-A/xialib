@@ -9,11 +9,12 @@ __all__ = ['Subscriber']
 class Subscriber(metaclass=abc.ABCMeta):
     def __init__(self, **kwargs):
         self.logger = logging.getLogger("XIA.Subscriber")
-        formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
-                                      ':%(message)s')
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        if len(self.logger.handlers) == 0:
+            formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
+                                          ':%(message)s')
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
 
     def unpack_message(self, message: dict) -> Tuple[dict, Union[str, bytes], str]:
         """ Public function

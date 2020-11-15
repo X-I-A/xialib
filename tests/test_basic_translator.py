@@ -11,7 +11,8 @@ with open(os.path.join('.', 'input', 'person_complex', '000002.json'), 'rb') as 
 
 with open(os.path.join('.', 'input', 'person_complex', 'schema.json'), 'rb') as f:
     data_header = json.loads(f.read().decode())
-    header = {'age': '1', 'data': data_header}
+    field_data = data_header.pop('columns')
+    header = {'age': '1', 'data': field_data, 'meta-data':data_header}
 
 @pytest.fixture()
 def translator():
@@ -35,12 +36,14 @@ def test_aged_body(translator):
     for line in age_header['data']:
         result_line = translator.get_translated_line(line, age=age_header['age'])
         assert result_line['_AGE'] == 2
+        result_line.pop('_AGE')
 
 def test_normal_body(translator):
     translator.compile(normal_header, normal_header['data'])
     for line in normal_header['data']:
         result_line = translator.get_translated_line(line, start_seq=normal_header['start_seq'])
         assert result_line['_SEQ'] == '2020111119150000000'
+        result_line.pop('_SEQ')
 
 def test_exceptions(translator):
     with pytest.raises(NotImplementedError):

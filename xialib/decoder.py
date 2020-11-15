@@ -9,14 +9,20 @@ __all__ = ['Decoder']
 
 
 class Decoder(metaclass=abc.ABCMeta):
+    """
+    Attributes:
+        supported_encodes (:obj:`list`): encodes supported by Decoder
+    """
+    supported_encodes = list()
+
     def __init__(self, **kwargs):
-        self.supported_encodes = []
         self.logger = logging.getLogger("XIA.Decoder")
-        formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
-                                      ':%(message)s')
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        if len(self.logger.handlers) == 0:
+            formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
+                                          ':%(message)s')
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
 
     def basic_encoder(self, data: Union[bytes, str], from_encode: str, to_encode: str) -> Union[bytes, str]:
         assert from_encode in ['blob', 'flat', 'gzip', 'b64g']  # pragma: no cover

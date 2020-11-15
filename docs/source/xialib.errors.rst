@@ -12,3 +12,5 @@ Error Codes
 * XIA-000009: Data communication must be compressed
 * XIA-000010: Subscriber must unpack a message with `data`, `dict`, `id` key words
 * XIA-000011: Subscription Path not found
+* XIA-000012: List archiver must have a validated archive_path
+* XIA-000012: File depositor must have a validated deposit_path

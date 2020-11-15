@@ -6,15 +6,21 @@ __all__ = ['Translator']
 
 
 class Translator(metaclass=abc.ABCMeta):
+    """
+    Attributes:
+        spec_list (:obj:`list`): Data specifications supported by Translator
+    """
+    spec_list = list()
+
     def __init__(self, **kwargs):
-        self.spec_list = list()
         self.translate_method = None
         self.logger = logging.getLogger("XIA.Translator")
-        formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
-                                      ':%(message)s')
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        if len(self.logger.handlers) == 0:
+            formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
+                                          ':%(message)s')
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
 
     @abc.abstractmethod
     def compile(self, header: dict, data: List[dict]):

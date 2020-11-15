@@ -4,9 +4,10 @@ class BasicTranslator(Translator):
     """
     Supported data specification in the case of no `data_spec` specified or type ``x-i-a``
     """
+    spec_list = ['x-i-a']
+
     def __init__(self):
         super().__init__()
-        self.spec_list = ['x-i-a']
 
     def _get_origin_line(self, line: dict, **kwargs) -> dict:
         return line
