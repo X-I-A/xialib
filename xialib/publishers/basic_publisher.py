@@ -9,9 +9,10 @@ class BasicPublisher(Publisher):
     Data is saved to path of (destination->topic_id->current_timestamp ).
     all content is dumped to a json file. Because the json do not support blob, the data part is base64 encoded
     """
+    blob_support = False
+
     def __init__(self):
         super().__init__()
-        self.blob_support = False
 
     def _get_message_id(self):
         return datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')

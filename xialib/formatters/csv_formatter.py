@@ -8,9 +8,10 @@ class CSVFormatter(Formatter):
     """
     Supported data format: ``csv``
     """
+    support_formats = ['csv']
+
     def __init__(self):
         super().__init__()
-        self.support_formats = ['csv']
 
     def _format_to_record(self, data_or_io, from_format, **kwargs):
         if isinstance(data_or_io, io.BufferedIOBase):

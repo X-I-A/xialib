@@ -23,6 +23,8 @@ def test_simple_record(formatter):
         counter += 1
         for key, value in record.items():
             assert value is not None
+        if record['id'] == 12:
+            assert record['city'] == "Ô Môn"
     assert counter == 1000
 
 
@@ -32,6 +34,8 @@ def test_simple_list(formatter):
         counter += 1
         for key, value in record.items():
             assert value is not None
+        if record['id'] == 12:
+            assert record['city'] == "Ô Môn"
     assert counter == 1000
 
 
@@ -41,6 +45,8 @@ def test_complex_list(formatter):
         counter += 1
         for key, value in record.items():
             assert value is not None
+        if record['id'] == 8:
+            assert record['city'] == "Mörrum"
     assert counter == 1000
 
 
@@ -51,6 +57,8 @@ def test_io_record(formatter):
             counter += 1
             for key, value in record.items():
                 assert value is not None
+            if record['id'] == 12:
+                assert record['city'] == "Ô Môn"
     assert counter == 1000
 
 
@@ -61,6 +69,8 @@ def test_io_list(formatter):
             counter += 1
             for key, value in record.items():
                 assert value is not None
+            if record['id'] == 12:
+                assert record['city'] == "Ô Môn"
     assert counter == 1000
 
 

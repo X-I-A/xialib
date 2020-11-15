@@ -7,9 +7,10 @@ class BasicDecoder(Decoder):
     """
     Supported data encodes: ``blob``, ``flat``, ``gzip``, ``b64g``
     """
+    supported_encodes = ['blob', 'flat', 'gzip', 'b64g']
+
     def __init__(self):
         super().__init__()
-        self.supported_encodes = ['blob', 'flat', 'gzip', 'b64g']
 
     def _encode_to_blob(self, data_or_io, from_encode, **kwargs):
         if isinstance(data_or_io, io.BufferedIOBase):

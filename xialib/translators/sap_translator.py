@@ -4,9 +4,10 @@ class SapTranslator(Translator):
     """
     Supported data formats: ``slt``, ``ddic``
     """
+    spec_list = ['slt', 'ddic']
+
     def __init__(self):
         super().__init__()
-        self.spec_list = ['slt', 'ddic']
         self.line_oper = dict()
 
     def _get_ddic_line(self, line: dict, **kwargs):

@@ -7,14 +7,20 @@ __all__ = ['Storer']
 
 
 class Storer(metaclass=abc.ABCMeta):
+    """
+    Attributes:
+        support_formats (:obj:`list`): Data store type supported by Storer
+    """
+    store_types = list()
+
     def __init__(self, **kwargs):
-        self.store_types = []
         self.logger = logging.getLogger("XIA.Storer")
-        formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
-                                      ':%(message)s')
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        if len(self.logger.handlers) == 0:
+            formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
+                                          ':%(message)s')
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
 
     @abc.abstractmethod
     def get_io_stream(self, location: str):

@@ -5,9 +5,10 @@ from xialib.storer import Storer
 class BasicStorer(Storer):
     """Local file system based storer
     """
+    store_types = ['file']
+
     def __init__(self):
         super().__init__()
-        self.store_types = ['file']
 
     def get_io_stream(self, location: str):
         with open(location, 'rb') as fp:

@@ -8,15 +8,20 @@ __all__ = ['Publisher']
 
 
 class Publisher(metaclass=abc.ABCMeta):
+    """
+    Attributes:
+        blob_support (:obj:`bool`): If it is possible to publish binary data
+    """
+    blob_support = True
+
     def __init__(self, **kwargs):
-        self.store_types = []
-        self.blob_support = True
         self.logger = logging.getLogger("XIA.Publisher")
-        formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
-                                      ':%(message)s')
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        if len(self.logger.handlers) == 0:
+            formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
+                                          ':%(message)s')
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
 
     def _preapare(self, header: dict, data: Union[str, bytes]):
         # Convert All Header to String-Like Objects

@@ -7,14 +7,20 @@ __all__ = ['Formatter']
 
 
 class Formatter(metaclass=abc.ABCMeta):
+    """
+    Attributes:
+        support_formats (:obj:`list`): formats supported by Formatter
+    """
+    support_formats = list()
+
     def __init__(self, **kwargs):
-        self.support_formats = []
         self.logger = logging.getLogger("XIA.Fromatter")
-        formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
-                                      ':%(message)s')
-        console_handler = logging.StreamHandler()
-        console_handler.setFormatter(formatter)
-        self.logger.addHandler(console_handler)
+        if len(self.logger.handlers) == 0:
+            formatter = logging.Formatter('%(asctime)s-%(process)d-%(thread)d-%(module)s-%(funcName)s-%(levelname)s-'
+                                          ':%(message)s')
+            console_handler = logging.StreamHandler()
+            console_handler.setFormatter(formatter)
+            self.logger.addHandler(console_handler)
 
     @abc.abstractmethod
     def _format_to_record(self, data_or_io: Union[io.BufferedIOBase, bytes],

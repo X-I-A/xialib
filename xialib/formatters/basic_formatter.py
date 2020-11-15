@@ -7,9 +7,10 @@ class BasicFormatter(Formatter):
     """
     Supported data formats: ``list``, ``record``
     """
+    support_formats = ['list', 'record']
+
     def __init__(self):
         super().__init__()
-        self.support_formats = ['list', 'record']
 
     def list_to_record(self, data: dict):
         if not data:
