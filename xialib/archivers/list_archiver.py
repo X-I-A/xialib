@@ -58,7 +58,7 @@ class ListArchiver(Archiver):
 
     def _archive_data(self):
         archive_file_name = os.path.join(self.table_path, self.merge_key + '.zst')
-        with zipfile.ZipFile(archive_file_name, 'w', compression=zipfile.ZIP_DEFLATED, compresslevel=9) as f:
+        with zipfile.ZipFile(archive_file_name, 'w', compression=zipfile.ZIP_DEFLATED) as f:
             for key, value in self.workspace[0].items():
                 item_name = base64.b32encode(key.encode()).decode()
                 f.writestr(item_name, json.dumps(value, ensure_ascii=False))
