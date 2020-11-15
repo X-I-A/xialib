@@ -7,11 +7,12 @@ from xialib import BasicPublisher
 
 data_1 = [{'_AGE': 2, 'MANDT': '100', 'BUKRS': '1001', 'NAME': 'Sébastien & Co'}]
 gzdata_1 = gzip.compress(json.dumps(data_1, ensure_ascii=False).encode())
-header_1 = {'age': 2, 'data_format': 'record', 'data_spec': 'x-i-a', 'data_encode': 'gzip'}
+header_1 = {'age': 2, 'data_format': 'record', 'data_spec': 'x-i-a', 'data_encode': 'gzip', 'data_store': 'body'}
 header_2 = header_1.copy()
-header_3 = {'age': 2, 'data_format': 'record', 'data_spec': 'x-i-a', 'data_encode': 'gzip',
+header_3 = {'age': 2, 'data_format': 'record', 'data_spec': 'x-i-a', 'data_encode': 'gzip', 'data_store': 'body',
             'merged_data': [1, 2, 3, 4, 5],
             'encrypted_data': {'user': 'hello', 'password': 'world'}}
+header_4 = {'age': 2, 'data_format': 'record', 'data_spec': 'x-i-a', 'data_encode': 'flat', 'data_store': 'file'}
 
 @pytest.fixture(scope='module')
 def publisher():
@@ -34,6 +35,14 @@ def test_complex_header(publisher):
         check_data = json.loads(fp.read().decode())
         assert isinstance(check_data['merged_data'], list)
         assert isinstance(check_data['encrypted_data'], dict)
+    os.remove(filename)
+
+def test_header_with_file(publisher):
+    filename = publisher.publish(os.path.join('.', 'input'), 'module_specific', header_4, 'bidon.json')
+    assert os.path.exists(filename)
+    with open(filename, 'rb') as fp:
+        check_data = json.loads(fp.read().decode())
+        assert check_data['data'] == 'bidon.json'
     os.remove(filename)
 
 def test_exceptions(publisher):
