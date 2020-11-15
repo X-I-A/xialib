@@ -29,7 +29,7 @@ class Publisher(metaclass=abc.ABCMeta):
             if isinstance(value, (int, float, bool)):
                 header[key] = str(value)
 
-        if not self.blob_support:
+        if not self.blob_support and header.get('data_store', '') == 'body':
             header['data_encode'] = 'b64g'
             data = base64.b64encode(data).decode()
 
@@ -73,7 +73,7 @@ class Publisher(metaclass=abc.ABCMeta):
             raise ValueError("XIA-000007")
         if header.get('data_format', '') != 'record':
             raise ValueError("XIA-000008")
-        if header.get('data_encode', '') != 'gzip':
+        if header.get('data_encode', '') != 'gzip' and header.get('data_store', '') == 'body':
             raise ValueError("XIA-000009")
         header, data = self._preapare(header, data)
         return self._send(destination, topic_id, header, data)
