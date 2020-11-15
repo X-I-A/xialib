@@ -93,6 +93,7 @@ class Depositor(metaclass=abc.ABCMeta):
         """
         self.set_current_topic_table(header['topic_id'], header['table_id'])
         content = header.copy()
+        content['deposit_at'] = self.get_current_timestamp()
         # Case 1 : Header
         if int(content.get('age', 0)) == 1:
             content['age'] = 1
@@ -112,7 +113,6 @@ class Depositor(metaclass=abc.ABCMeta):
         else:
             content['merge_key'] = content['start_seq']
             content['merge_level'] = self.calc_merge_level(content['merge_key'])
-            content['deposit_at'] = self.get_current_timestamp()
             content['sort_key'] = content['deposit_at']
             content['merge_status'] = 'initial'
         # Data sort
