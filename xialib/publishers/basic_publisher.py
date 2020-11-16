@@ -19,6 +19,10 @@ class BasicPublisher(Publisher):
 
     def _send(self, destination: str, topic_id: str, header: dict, data):
         file_name = os.path.join(destination, topic_id, self._get_message_id())
+        if not os.path.exists(destination):
+            os.mkdir(destination)
+        if not os.path.exists(os.path.join(destination, topic_id)):
+            os.mkdir(os.path.join(destination, topic_id))
         content = header.copy()
         content['data'] = data
         with open(file_name, 'w') as f:

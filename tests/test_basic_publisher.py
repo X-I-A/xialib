@@ -20,30 +20,36 @@ def publisher():
     yield publisher
 
 def test_simple_flow(publisher):
-    filename = publisher.publish(os.path.join('.', 'input'), 'module_specific', header_1, gzdata_1)
+    filename = publisher.publish(os.path.join('.', 'input', 'tmpdir'), 'topic', header_1, gzdata_1)
     assert os.path.exists(filename)
     with open(filename, 'rb') as fp:
         check_data = json.loads(fp.read().decode())
         for line in json.loads(gzip.decompress(base64.b64decode(check_data['data'])).decode()):
             assert 'é' in line['NAME']
     os.remove(filename)
+    os.rmdir(os.path.join('.', 'input', 'tmpdir', 'topic'))
+    os.rmdir(os.path.join('.', 'input', 'tmpdir'))
 
 def test_complex_header(publisher):
-    filename = publisher.publish(os.path.join('.', 'input'), 'module_specific', header_3, gzdata_1)
+    filename = publisher.publish(os.path.join('.', 'input', 'tmpdir'), 'topic', header_3, gzdata_1)
     assert os.path.exists(filename)
     with open(filename, 'rb') as fp:
         check_data = json.loads(fp.read().decode())
         assert isinstance(check_data['merged_data'], list)
         assert isinstance(check_data['encrypted_data'], dict)
     os.remove(filename)
+    os.rmdir(os.path.join('.', 'input', 'tmpdir', 'topic'))
+    os.rmdir(os.path.join('.', 'input', 'tmpdir'))
 
 def test_header_with_file(publisher):
-    filename = publisher.publish(os.path.join('.', 'input'), 'module_specific', header_4, 'bidon.json')
+    filename = publisher.publish(os.path.join('.', 'input', 'tmpdir'), 'topic', header_4, 'bidon.json')
     assert os.path.exists(filename)
     with open(filename, 'rb') as fp:
         check_data = json.loads(fp.read().decode())
         assert check_data['data'] == 'bidon.json'
     os.remove(filename)
+    os.rmdir(os.path.join('.', 'input', 'tmpdir', 'topic'))
+    os.rmdir(os.path.join('.', 'input', 'tmpdir'))
 
 def test_exceptions(publisher):
     header_2['data_encode'] = 'zip'
