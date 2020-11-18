@@ -169,7 +169,7 @@ class Depositor(metaclass=abc.ABCMeta):
             chunk_header['start_seq'] = cur_seq
             yield {'header': chunk_header, 'data': data_io.getvalue()}
 
-    def add_document(self, header: dict, data: List[dict]) -> dict:
+    def add_document(self, header: dict, data: List[dict]) -> List[dict]:
         """ Public function
 
         This function will add a document to depositor. The following properties:
@@ -181,7 +181,7 @@ class Depositor(metaclass=abc.ABCMeta):
             data (:obj:`list` of :obj:`dict`): Data in Python dictioany list format
 
         Returns:
-            :obj:`dict`: Added document header
+            :obj:`list` of :obj:`dict`: List of added document header
         """
         self.set_current_topic_table(header['topic_id'], header['table_id'])
         content = header.copy()
@@ -196,33 +196,33 @@ class Depositor(metaclass=abc.ABCMeta):
             content['merge_status'] = 'header'
             content['merge_level'] = 9
             content['sort_key'] = content['start_seq']
-            return self._add_document(content, gzip.compress(json.dumps(data, ensure_ascii=False).encode()))
+            return [self._add_document(content, gzip.compress(json.dumps(data, ensure_ascii=False).encode()))]
         # Case 2 : Aged Document
         elif 'age' in content:
             for key in [k for k in ['age', 'end_age'] if k in content]:
                 content[key] = int(content[key])
             data = sorted(data, key=lambda a: (a.get('_AGE', 0), a.get('_NO', 0)))
-            result_header = content.copy()
+            result_headers = list()
             content['merge_status'] = 'initial'
             for result in self._get_aged_data_chunk(content, data):
                 chunk_h = result['header']
                 chunk_h['merge_key'] = str(int(chunk_h['start_seq']) + chunk_h.get('end_age', chunk_h['age']))
                 chunk_h['sort_key'] = chunk_h['merge_key']
                 chunk_h['merge_level'] = self.calc_merge_level(chunk_h['merge_key'])
-                result_header = self._add_document(chunk_h, result['data'])
-            return result_header
+                result_headers.append(self._add_document(chunk_h, result['data']))
+            return result_headers
         # Case 3 : Normal Document
         else:
             data = sorted(data, key=lambda a: (a.get('_SEQ', ''), a.get('_NO', 0)))
-            result_header = content.copy()
+            result_headers = list()
             content['merge_status'] = 'initial'
             for result in self._get_normal_data_chunk(content, data):
                 chunk_h = result['header']
                 chunk_h['merge_key'] = chunk_h['start_seq']
                 chunk_h['merge_level'] = self.calc_merge_level(chunk_h['merge_key'])
                 chunk_h['sort_key'] = chunk_h['deposit_at']
-                result_header = self._add_document(chunk_h, result['data'])
-            return result_header
+                result_headers.append(self._add_document(chunk_h, result['data']))
+            return result_headers
 
     @abc.abstractmethod
     def _add_document(self, header: dict, data: bytes) -> dict:
