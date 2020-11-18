@@ -13,4 +13,6 @@ Error Codes
 * XIA-000010: Subscriber must unpack a message with `data`, `dict`, `id` key words
 * XIA-000011: Subscription Path not found
 * XIA-000012: List archiver must have a validated archive_path
-* XIA-000012: File depositor must have a validated deposit_path
+* XIA-000015: File depositor must have a validated deposit_path
+* XIA-000016: Not enough age ranged defined for an aged flow
+* XIA-000017: Updated data is oversized

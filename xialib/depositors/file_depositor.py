@@ -17,7 +17,7 @@ class FileDepositor(Depositor):
             self.archive_path = deposit_path
         else:
             self.logger.error("{} does not exist".format(deposit_path), extra=self.log_context)
-            raise ValueError("XIA-000013")
+            raise ValueError("XIA-000015")
         self.deposit_path = deposit_path
 
     def _get_ref_from_filename(self, filename):
@@ -39,7 +39,7 @@ class FileDepositor(Depositor):
         if not os.path.exists(self.table_path):
             os.makedirs(self.table_path)
 
-    def _add_document(self, header: dict, data: List[dict]) -> dict:
+    def _add_document(self, header: dict, data: bytes) -> dict:
         if header['merge_status'] == 'header':
             doc_ref = header['sort_key'] + '.header'
         else:
@@ -48,18 +48,18 @@ class FileDepositor(Depositor):
         if os.path.exists(old_file):
             os.remove(old_file)
         doc_content = header.copy()
-        doc_content['data'] = base64.b64encode(gzip.compress(json.dumps(data, ensure_ascii=False).encode())).decode()
+        doc_content['data'] = base64.b64encode(data).decode()
         doc_content['data_size'] = len(doc_content['data'])
         with open(os.path.join(self.table_path, doc_ref), 'w') as f:
             f.write(json.dumps(doc_content, ensure_ascii=False))
         doc_content.pop('data')
         return doc_content
 
-    def _update_document(self, ref: Any, header: dict, data: List[dict]):
+    def _update_document(self, ref: Any, header: dict, data: bytes):
         ori_filename = os.path.join(self.table_path, self._get_ref_from_filename(ref))
         tar_filename = os.path.join(self.table_path, '.'.join([ref.split('.')[0], header['merge_status']]))
         doc_content = header.copy()
-        doc_content['data'] = base64.b64encode(gzip.compress(json.dumps(data, ensure_ascii=False).encode())).decode()
+        doc_content['data'] = base64.b64encode(data).decode()
         doc_content['data_size'] = len(doc_content['data'])
         with open(tar_filename, 'w') as f:
             f.write(json.dumps(doc_content, ensure_ascii=False))
@@ -76,7 +76,7 @@ class FileDepositor(Depositor):
         with open(ori_filename, 'rb') as f:
             doc_content = json.loads(f.read().decode())
         for key, value in header.items():
-            if key not in doc_content:
+            if key not in doc_content and value != self.DELETE:
                 doc_content[key] = value
             elif value == self.DELETE:
                 doc_content.pop(key)
