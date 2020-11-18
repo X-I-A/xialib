@@ -1,4 +1,7 @@
 import abc
+import io
+import gzip
+import json
 import hashlib
 import datetime
 import logging
@@ -44,8 +47,8 @@ class Depositor(metaclass=abc.ABCMeta):
         hex_dict = {'2': 1, '4': 2, '6': 1, '8': 3, 'a': 1, 'c': 2, 'e': 1}
         prove = hashlib.md5(merge_key.encode()).hexdigest()
         zero_count = (len(prove) - len(prove.rstrip('0'))) * 4 + hex_dict.get(prove[0], 0)
-        mlvl_dict = {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 9: 4, 10: 5, 11: 6, 12: 7}
-        return mlvl_dict.get(zero_count, 8)
+        mlvl_dict = {0: 0, 1: 0, 2: 0, 3: 1, 4: 1, 5: 2, 6: 2, 7: 3, 8: 3, 9: 4, 10: 5, 11: 6}
+        return mlvl_dict.get(zero_count, 7)
 
     @classmethod
     def get_current_timestamp(cls):
@@ -77,6 +80,95 @@ class Depositor(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError  # pragma: no cover
 
+    def _get_aged_data_chunk(self, header: dict, input_data: List[dict]) -> Generator[dict, None, None]:
+        chunk_size = self.size_limit // 8
+        chunk_number, raw_size, cur_age, line_no, data_io, zipped_size, zipped_io = 0, 0, None, 0, None, 0, None
+        for line in input_data:
+            cur_age = line['_AGE'] if cur_age is None else cur_age
+            line['_AGE'] = cur_age
+            if '_NO' in line:
+                line['_NO'] = line_no
+                line_no += 1
+            json_line = json.dumps(line, ensure_ascii=False)
+            if data_io is None:
+                data_io = io.BytesIO()
+                zipped_io = gzip.GzipFile(mode='wb', fileobj=data_io)
+                zipped_io.write(('[' + json_line).encode())
+            else:
+                zipped_io.write((',' + json_line).encode())
+            raw_size += (len(json_line) + 1)
+
+            cur_chunk_number = raw_size // chunk_size
+            if cur_chunk_number != chunk_number:
+                chunk_number = cur_chunk_number
+                zipped_io.flush()
+                zipped_size = data_io.getbuffer().nbytes
+                if zipped_size >= self.size_limit // 2:
+                    zipped_io.write(']'.encode())
+                    zipped_io.close()
+                    chunk_header = header.copy()
+                    if cur_age > header.get('end_age', header['age']):
+                        self.logger.error("Not enough age ranged defined for an aged flow", extra=self.log_context)
+                        raise ValueError('XIA-000016')
+                    chunk_header['age'] = cur_age
+                    chunk_header.pop('end_age', None)
+                    chunk_data = data_io.getvalue()
+                    yield {'header': chunk_header, 'data': chunk_data}
+                    cur_age += 1
+                    chunk_number, raw_size, line_no, data_io, zipped_size, zipped_io = 0, 0, 0, None, 0, None
+        if raw_size > 0 or cur_age != header.get('end_age', cur_age):
+            if raw_size > 0:
+                zipped_io.write(']'.encode())
+                zipped_io.close()
+                chunk_data = data_io.getvalue()
+            else:
+                chunk_data = gzip.compress(b'[]')
+            chunk_header = header.copy()
+            if cur_age > header.get('end_age', header['age']):
+                self.logger.error("Not enough age ranged defined for an aged flow", extra=self.log_context)
+                raise ValueError('XIA-000016')
+            chunk_header['age'] = cur_age
+            chunk_header['end_age'] = header.get('end_age', cur_age)
+            yield {'header': chunk_header, 'data': chunk_data}
+
+    def _get_normal_data_chunk(self, header: dict, input_data: List[dict]) -> Generator[dict, None, None]:
+        chunk_size = self.size_limit // 8
+        chunk_number, raw_size, cur_seq, line_no, data_io, zipped_size, zipped_io = 0, 0, None, 0, None, 0, None
+        for line in input_data:
+            cur_seq = line['_SEQ'] if cur_seq is None or line['_SEQ'] > cur_seq else cur_seq
+            line['_SEQ'] = cur_seq
+            if '_NO' in line:
+                line['_NO'] = line_no
+                line_no += 1
+            json_line = json.dumps(line, ensure_ascii=False)
+            if data_io is None:
+                data_io = io.BytesIO()
+                zipped_io = gzip.GzipFile(mode='wb', fileobj=data_io)
+                zipped_io.write(('[' + json_line).encode())
+            else:
+                zipped_io.write((',' + json_line).encode())
+            raw_size += (len(json_line) + 1)
+
+            cur_chunk_number = raw_size // chunk_size
+            if cur_chunk_number != chunk_number:
+                chunk_number = cur_chunk_number
+                zipped_io.flush()
+                zipped_size = data_io.getbuffer().nbytes
+                if zipped_size >= self.size_limit // 2:
+                    zipped_io.write(']'.encode())
+                    zipped_io.close()
+                    chunk_header = header.copy()
+                    chunk_header['start_seq'] = cur_seq
+                    yield {'header': chunk_header, 'data': data_io.getvalue()}
+                    cur_seq = str(int(cur_seq) + 1)
+                    chunk_number, raw_size, line_no, data_io, zipped_size, zipped_io = 0, 0, 0, None, 0, None
+        if raw_size > 0:
+            zipped_io.write(']'.encode())
+            zipped_io.close()
+            chunk_header = header.copy()
+            chunk_header['start_seq'] = cur_seq
+            yield {'header': chunk_header, 'data': data_io.getvalue()}
+
     def add_document(self, header: dict, data: List[dict]) -> dict:
         """ Public function
 
@@ -94,6 +186,9 @@ class Depositor(metaclass=abc.ABCMeta):
         self.set_current_topic_table(header['topic_id'], header['table_id'])
         content = header.copy()
         content['deposit_at'] = self.get_current_timestamp()
+        content.pop('merged_level', None)
+        content.pop('segment_start_time', None)
+        content.pop('segment_start_age', None)
         # Case 1 : Header
         if int(content.get('age', 0)) == 1:
             content['age'] = 1
@@ -101,41 +196,51 @@ class Depositor(metaclass=abc.ABCMeta):
             content['merge_status'] = 'header'
             content['merge_level'] = 9
             content['sort_key'] = content['start_seq']
+            return self._add_document(content, gzip.compress(json.dumps(data, ensure_ascii=False).encode()))
         # Case 2 : Aged Document
         elif 'age' in content:
-            for key in [k for k in ['age', 'end_age', 'segment_start_age'] if k in content]:
+            for key in [k for k in ['age', 'end_age'] if k in content]:
                 content[key] = int(content[key])
-            content['merge_key'] = str(int(content['start_seq']) + content.get('end_age', content['age']))
-            content['sort_key'] = content['merge_key']
-            content['merge_level'] = self.calc_merge_level(content['merge_key'])
+            data = sorted(data, key=lambda a: (a.get('_AGE', 0), a.get('_NO', 0)))
+            result_header = content.copy()
             content['merge_status'] = 'initial'
+            for result in self._get_aged_data_chunk(content, data):
+                chunk_h = result['header']
+                chunk_h['merge_key'] = str(int(chunk_h['start_seq']) + chunk_h.get('end_age', chunk_h['age']))
+                chunk_h['sort_key'] = chunk_h['merge_key']
+                chunk_h['merge_level'] = self.calc_merge_level(chunk_h['merge_key'])
+                result_header = self._add_document(chunk_h, result['data'])
+            return result_header
         # Case 3 : Normal Document
         else:
-            content['merge_key'] = content['start_seq']
-            content['merge_level'] = self.calc_merge_level(content['merge_key'])
-            content['sort_key'] = content['deposit_at']
+            data = sorted(data, key=lambda a: (a.get('_SEQ', ''), a.get('_NO', 0)))
+            result_header = content.copy()
             content['merge_status'] = 'initial'
-        # Data sort
-        data = sorted(data, key=lambda a: (a.get('_AGE', 0), a.get('_SEQ', ''), a.get('_NO', 0)))
-        return self._add_document(content, data)
+            for result in self._get_normal_data_chunk(content, data):
+                chunk_h = result['header']
+                chunk_h['merge_key'] = chunk_h['start_seq']
+                chunk_h['merge_level'] = self.calc_merge_level(chunk_h['merge_key'])
+                chunk_h['sort_key'] = chunk_h['deposit_at']
+                result_header = self._add_document(chunk_h, result['data'])
+            return result_header
 
     @abc.abstractmethod
-    def _add_document(self, header: dict, data: List[dict]) -> dict:
+    def _add_document(self, header: dict, data: bytes) -> dict:
         """ To be implemented function
 
         This function will add a header-prepared document to depositor
 
         Args:
             header (:obj:`str`): Document Header
-            data (:obj:`str`): Data in Python dictioany list format
+            data (:obj:`bytes`): gzipped bytes objects
 
         Returns:
-            :obj:`dict`: Added document header
+            :obj:`dict`: Last chunked Added document header
         """
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def _update_document(self, ref: Any, header: dict, data: List[dict]) -> dict:
+    def _update_document(self, ref: Any, header: dict, data: bytes) -> dict:
         """ To be implemented function
 
         This function will update document and its data
@@ -143,10 +248,10 @@ class Depositor(metaclass=abc.ABCMeta):
         Args:
             ref (:obj:`Any`): Document reference
             header (:obj:`str`): Document Header
-            data (:obj:`str`): Data in Python dictioany list format
+            data (:obj:`bytes`): gzipped bytes objects
 
         Returns:
-            :obj:`dict`: Modified document header
+            :obj:`dict`: Last chunked Modified document header
         """
         raise NotImplementedError  # pragma: no cover
 
@@ -177,11 +282,15 @@ class Depositor(metaclass=abc.ABCMeta):
                 Only specified field of header will be updated (if possible)
 
         Returns:
-            :obj:`dict`: Modified document header
+            :obj:`dict`: Last chunked Modified document header
         """
         if data is not None:
             data = sorted(data, key=lambda a: (a.get('_AGE', 0), a.get('_SEQ', ''), a.get('_NO', 0)))
-            return self._update_document(ref, header, data)
+            gzipped_data = gzip.compress(json.dumps(data, ensure_ascii=False).encode())
+            if len(gzipped_data) >= self.size_limit:
+                self.logger.error("Updated data is oversized", extra=self.log_context)
+                raise ValueError("XIA-000017")
+            return self._update_document(ref, header, gzipped_data)
         else:
             return self._update_header(ref, header)
 
@@ -421,7 +530,7 @@ class Depositor(metaclass=abc.ABCMeta):
         segment_start_age = min([task['start_age'] for task in merge_task])
         over_size_flag = True if sum([task['size'] for task in merge_task]) >= self.size_limit else False
         has_merged_flag = True if any([task['merged'] for task in merge_task]) else False
-        merge_flag = True if over_size_flag or has_merged_flag else False
+        merge_flag = True if over_size_flag or has_merged_flag or target_merge_level == 7 else False
         task_list = sorted(merge_task, key=lambda x: x['task_end_age'], reverse=True)
         del_list = list()
         # Case 1: Simple no merge at all
@@ -442,7 +551,7 @@ class Depositor(metaclass=abc.ABCMeta):
             self.delete_documents(del_list)
             return True
         # Case 2 - Step 1: Merge everything who is self-oversized
-        for task in [task for task in task_list if task['size'] >= self.size_limit and not task['merged']]:
+        for task in [task for task in task_list if task['size'] >= (self.size_limit // 2) and not task['merged']]:
             header = self.get_header_from_ref(task['ref'])
             body_data = [item for item in self.get_data_from_header(header)
                               if task['task_start_age'] <= item['_AGE'] <= task['task_end_age']]
@@ -456,7 +565,8 @@ class Depositor(metaclass=abc.ABCMeta):
         base_doc, total_size, header, body_data = None, 0, dict(), list()
         for task in task_list:
             if (total_size + task['size'] >= self.size_limit or task['merged']) and total_size > 0:
-                self.update_document(base_doc, header, body_data)
+                updated_header = self.update_document(base_doc, header, body_data)
+                self.inc_table_header(merged_size=updated_header['data_size'])
                 base_doc, total_size, header, body_data = None, 0, dict(), list()
             if task['merged']:
                 continue
@@ -490,7 +600,7 @@ class Depositor(metaclass=abc.ABCMeta):
         segment_start_time = min([task['start_time'] for task in merge_task])
         over_size_flag = True if sum([task['size'] for task in merge_task]) >= self.size_limit else False
         has_merged_flag = True if any([task['merged'] for task in merge_task]) else False
-        merge_flag = True if over_size_flag or has_merged_flag else False
+        merge_flag = True if over_size_flag or has_merged_flag or target_merge_level == 7 else False
         task_list = sorted(merge_task, key=lambda x: x['end_time'], reverse=True)
         del_list = list()
         # Case 1: Simple no merge at all
@@ -510,7 +620,7 @@ class Depositor(metaclass=abc.ABCMeta):
             self.delete_documents(del_list)
             return True
         # Case 2 - Step 1: Merge everything who is self-oversized
-        for task in [task for task in task_list if task['size'] >= self.size_limit and not task['merged']]:
+        for task in [task for task in task_list if task['size'] >= (self.size_limit // 2) and not task['merged']]:
             header = self.get_header_from_ref(task['ref'])
             body_data = self.get_data_from_header(header)
             header['merge_status'] = 'merged'
@@ -521,7 +631,8 @@ class Depositor(metaclass=abc.ABCMeta):
         base_doc, total_size, header, body_data = None, 0, dict(), list()
         for task in task_list:
             if (total_size + task['size'] >= self.size_limit or task['merged']) and total_size > 0:
-                self.update_document(base_doc, header, body_data)
+                updated_header = self.update_document(base_doc, header, body_data)
+                self.inc_table_header(merged_size=updated_header['data_size'])
                 base_doc, total_size, header, body_data = None, 0, dict(), list()
             if task['merged']:
                 continue
