@@ -150,7 +150,7 @@ def test_merge_aged_simple(depositor):
     depositor.size_limit = 2 ** 20
     assert depositor.merge_documents('20201113222500000221', 1)
     assert depositor.merge_documents('20201113222500000267', 2)
-    assert not depositor.merge_documents('20201113222500000267', 1)
+    assert depositor.merge_documents('20201113222500000267', 1)
     counter, total_size = 0, 0
     for doc in depositor.get_stream_by_sort_key(status_list=['merged']):
         doc_dict = depositor.get_header_from_ref(doc)

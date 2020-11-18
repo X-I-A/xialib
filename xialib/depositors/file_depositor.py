@@ -79,7 +79,7 @@ class FileDepositor(Depositor):
             if key not in doc_content and value != self.DELETE:
                 doc_content[key] = value
             elif value == self.DELETE:
-                doc_content.pop(key)
+                doc_content.pop(key, None)
             else:
                 doc_content[key] = value
         with open(tar_filename, 'w') as f:

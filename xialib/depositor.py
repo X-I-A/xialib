@@ -426,7 +426,7 @@ class Depositor(metaclass=abc.ABCMeta):
             return False # pragma: no cover
         elif base_doc_header.get('merged_level', 0) >= target_merge_level:
             self.logger.warning("This level has already been merged", extra=self.log_context)
-            return False
+            return True
         if 'age' in base_doc_header:
             aged_merge_task = self._get_aged_merge_task(base_doc, base_doc_header, target_merge_level)
             if not aged_merge_task:
