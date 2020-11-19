@@ -157,6 +157,7 @@ def test_merge_aged_simple(depositor):
         doc_data = depositor.get_data_from_header(doc_dict)
         counter += len(doc_data)
         total_size += doc_dict['data_size']
+        assert doc_dict['line_nb'] == len(doc_data)
     header_ref = depositor.get_table_header()
     header_dict = depositor.get_header_from_ref(header_ref)
     assert counter == 266

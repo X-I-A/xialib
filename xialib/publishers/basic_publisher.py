@@ -1,6 +1,6 @@
 import os
+import uuid
 import json
-import datetime
 from xialib.publisher import Publisher
 
 class BasicPublisher(Publisher):
@@ -14,8 +14,8 @@ class BasicPublisher(Publisher):
     def __init__(self):
         super().__init__()
 
-    def _get_message_id(self):
-        return datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
+    def _get_message_id(self) -> str:
+        return str(uuid.uuid4())
 
     def _send(self, destination: str, topic_id: str, header: dict, data):
         file_name = os.path.join(destination, topic_id, self._get_message_id())

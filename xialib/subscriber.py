@@ -90,3 +90,22 @@ class Subscriber(metaclass=abc.ABCMeta):
             True if successful, False otherwise.
         """
         raise NotImplementedError  # pragma: no cover
+
+    def nack(self, source: str, subscription_id: str, message_id: str) -> bool:
+        """ Pubblic function
+
+        This function no-acknowlegde the message reception.
+
+        Args:
+            source (:obj:`str`): source name
+            subscription_id (:obj:`str`): subscription id
+            message_id (:obj:`str`): message id
+
+        Returns:
+            True if successful, False otherwise.
+
+        Notes:
+            If message servers recognize no difference between a reception without ack and an explict uack,
+            just leave this function as is
+        """
+        return True
