@@ -39,6 +39,7 @@ def test_ack(subscriber):
         data = f1.read()
         with open(os.path.join(source, subscription_id, 'ack_test'), 'w') as f2:
             f2.write(data)
+    assert subscriber.nack(source, subscription_id, 'ack_test')
     assert subscriber.ack(source, subscription_id, 'ack_test')
     assert not subscriber.ack(source, subscription_id, 'ack_test')
 
