@@ -183,7 +183,7 @@ def test_merge_normal_simple(depositor):
         doc_data = depositor.get_data_from_header(doc_dict)
         counter += len(doc_data)
         total_size += doc_dict['data_size']
-    assert counter == 882
+    assert counter == 902
     header_ref = depositor.get_table_header()
     header_dict = depositor.get_header_from_ref(header_ref)
     assert total_size == header_dict['merged_size']

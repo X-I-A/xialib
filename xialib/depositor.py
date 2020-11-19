@@ -187,7 +187,6 @@ class Depositor(metaclass=abc.ABCMeta):
         """
         self.set_current_topic_table(header['topic_id'], header['table_id'])
         content = header.copy()
-        content['deposit_at'] = self.get_current_timestamp()
         content.pop('merged_level', None)
         content.pop('segment_start_time', None)
         content.pop('segment_start_age', None)
@@ -199,6 +198,9 @@ class Depositor(metaclass=abc.ABCMeta):
             content['merge_level'] = 9
             content['sort_key'] = content['start_seq']
             content['line_nb'] = len(data)
+            content['deposit_at'] = self.get_current_timestamp()
+            for key in ['merged_size', 'merged_lines', 'packaged_size', 'packaged_lines']:
+                content.pop(key, None)
             return [self._add_document(content, gzip.compress(json.dumps(data, ensure_ascii=False).encode()))]
         # Case 2 : Aged Document
         elif 'age' in content:
@@ -213,6 +215,7 @@ class Depositor(metaclass=abc.ABCMeta):
                 chunk_h['sort_key'] = chunk_h['merge_key']
                 chunk_h['merge_level'] = self.calc_merge_level(chunk_h['merge_key'])
                 chunk_h['line_nb'] = result['line_nb']
+                chunk_h['deposit_at'] = self.get_current_timestamp()
                 result_headers.append(self._add_document(chunk_h, result['data']))
             return result_headers
         # Case 3 : Normal Document
@@ -224,6 +227,7 @@ class Depositor(metaclass=abc.ABCMeta):
                 chunk_h = result['header']
                 chunk_h['merge_key'] = chunk_h['start_seq']
                 chunk_h['merge_level'] = self.calc_merge_level(chunk_h['merge_key'])
+                chunk_h['deposit_at'] = self.get_current_timestamp()
                 chunk_h['sort_key'] = chunk_h['deposit_at']
                 chunk_h['line_nb'] = result['line_nb']
                 result_headers.append(self._add_document(chunk_h, result['data']))
