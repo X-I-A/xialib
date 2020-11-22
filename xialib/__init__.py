@@ -10,7 +10,7 @@ from xialib import translators
 from xialib.archivers import ListArchiver
 from xialib.decoders import BasicDecoder, ZipDecoder
 from xialib.depositors import FileDepositor
-from xialib.formatters import BasicFormatter, CSVFormatter
+from xialib.formatters import BasicFormatter, CSVFormatter, ZstFormatter
 from xialib.publishers import BasicPublisher
 from xialib.storers import BasicStorer
 from xialib.subscribers import BasicSubscriber
@@ -26,4 +26,4 @@ __all__ = \
     subscribers.__all__ + \
     translators.__all__
 
-__version__ = "0.1.9"
+__version__ = "0.1.10"
