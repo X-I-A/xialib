@@ -14,7 +14,7 @@ class CSVFormatter(Formatter):
         super().__init__()
 
     def _format_to_record(self, data_or_io, from_format, **kwargs):
-        if isinstance(data_or_io, io.BufferedIOBase):
+        if isinstance(data_or_io, io.IOBase):
             StreamReader = codecs.getreader('utf-8')
             reader_io = StreamReader(data_or_io)
         elif isinstance(data_or_io, bytes):

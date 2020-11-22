@@ -22,7 +22,7 @@ class Storer(metaclass=abc.ABCMeta):
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
 
-    def get_io_stream(self, location: str) -> io.BufferedIOBase:
+    def get_io_stream(self, location: str) -> io.IOBase:
         """ To be implemented optionaly function
 
         The function to be implemented by customized storer to yield an IO flow. Please do not implement it
@@ -32,7 +32,7 @@ class Storer(metaclass=abc.ABCMeta):
             location (:obj:`str`): resource location
 
         Yields:
-            :obj:`io.BufferedIOBase` : IO flow
+            :obj:`io.IOBase` : IO flow
         """
         raise NotImplementedError  # pragma: no cover
 
@@ -51,13 +51,13 @@ class Storer(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def write(self, data_or_io: Union[io.BufferedIOBase, bytes], location: str) -> str:
+    def write(self, data_or_io: Union[io.IOBase, bytes], location: str) -> str:
         """ To be implemented function
 
         The function to be implemented by customized storer to write to the location
 
         Args:
-            data_or_io (:obj:`io.BufferedIOBase` or :obj:`bytes`): Input
+            data_or_io (:obj:`io.IOBase` or :obj:`bytes`): Input
             location (:obj:`str`): target location
 
         Returns:

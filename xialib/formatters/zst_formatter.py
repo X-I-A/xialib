@@ -24,7 +24,7 @@ class ZstFormatter(Formatter):
         return [{key: value[i] for key, value in data.items() if value[i] is not None} for i in range(line_nbs[0])]
 
     def _format_to_record(self, data_or_io, from_format, **kwargs):
-        if isinstance(data_or_io, io.BufferedIOBase):
+        if isinstance(data_or_io, io.IOBase):
             raw_data_io = data_or_io
         else:
             raw_data_io = io.BytesIO(data_or_io)
