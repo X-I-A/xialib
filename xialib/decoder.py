@@ -56,38 +56,38 @@ class Decoder(metaclass=abc.ABCMeta):
             yield gzip.decompress(base64.b64decode(data.encode()))
 
     @abc.abstractmethod
-    def _encode_to_blob(self, data_or_io: Union[io.BufferedIOBase, bytes],
-                        from_encode: str, **kwargs) -> Union[io.BufferedIOBase, bytes]:
+    def _encode_to_blob(self, data_or_io: Union[io.IOBase, bytes],
+                        from_encode: str, **kwargs) -> Union[io.IOBase, bytes]:
         """ To be implemented function
 
         The function to be implemented by customized encoder.
 
         Args:
-            data_or_io (:obj:`io.BufferedIOBase` or :obj:`bytes`): data to be decoded
+            data_or_io (:obj:`io.IOBase` or :obj:`bytes`): data to be decoded
             from_encode (str): source encode
 
         Returns:
-            :obj:`io.BufferedIOBase` or :obj:`bytes`
+            :obj:`io.IOBase` or :obj:`bytes`
 
         Note:
-            Use :obj:`io.BufferedIOBase` if it is possible
+            Use :obj:`io.IOBase` if it is possible
         """
         raise NotImplementedError  # pragma: no cover
 
-    def decoder(self, data_or_io:  Union[io.BufferedIOBase, bytes, str],
-                from_encode: str, to_encode: str, **kwargs) -> Union[io.BufferedIOBase, bytes]:
+    def decoder(self, data_or_io:  Union[io.IOBase, bytes, str],
+                from_encode: str, to_encode: str, **kwargs) -> Union[io.IOBase, bytes]:
         """ Public function
 
         This function can decode data or io flow into requested encode.
-        If to_encode is ``blob``, deocder will try to keep the :obj:`io.BufferedIOBase` as output.
+        If to_encode is ``blob``, deocder will try to keep the :obj:`io.IOBase` as output.
 
         Args:
-            data_or_io (:obj:`io.BufferedIOBase` or :obj:`str` or :obj:`bytes`): data to be decoded
+            data_or_io (:obj:`io.IOBase` or :obj:`str` or :obj:`bytes`): data to be decoded
             from_encode (str): source encode
             to_encode (str): target encode
 
         Returns:
-            data (:obj:`io.BufferedIOBase` or :obj:`bytes`)
+            data (:obj:`io.IOBase` or :obj:`bytes`)
         """
         if len(self.supported_encodes) == 0:
             raise NotImplementedError  # pragma: no cover
@@ -96,7 +96,7 @@ class Decoder(metaclass=abc.ABCMeta):
             self.logger.error("Decoder of {} not found at {}".format(from_encode, self.__class__.__name__))
             raise TypeError("XIA-000001")
 
-        if not isinstance(data_or_io, (str, bytes, io.BufferedIOBase)):
+        if not isinstance(data_or_io, (str, bytes, io.IOBase)):
             self.logger.error("Data type {} not supported".format(data_or_io.__class__.__name__))
             raise TypeError("XIA-000002")
 
@@ -111,7 +111,7 @@ class Decoder(metaclass=abc.ABCMeta):
                     yield output
             else:
                 # Terminating
-                if isinstance(data_or_io, io.BufferedIOBase):
+                if isinstance(data_or_io, io.IOBase):
                     if from_encode in ['flat', 'b64g']:
                         data_or_io = data_or_io.read().decode()
                     else:
@@ -122,7 +122,7 @@ class Decoder(metaclass=abc.ABCMeta):
             for output in self._encode_to_blob(data_or_io, from_encode, **kwargs):
                 if to_encode == 'blob':
                     yield output
-                elif isinstance(output, io.BufferedIOBase):
+                elif isinstance(output, io.IOBase):
                     output = output.read()
                     for output in self.basic_encoder(output, 'blob', to_encode):
                         yield output

@@ -14,7 +14,7 @@ class ZipDecoder(Decoder):
 
     def _encode_to_blob(self, data_or_io, from_encode, **kwargs):
         # IO to IO
-        if isinstance(data_or_io, io.BufferedIOBase):
+        if isinstance(data_or_io, io.IOBase):
             archive = zipfile.ZipFile(data_or_io)
             for file in archive.namelist():
                 with archive.open(file) as f:

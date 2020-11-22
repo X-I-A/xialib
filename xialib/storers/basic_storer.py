@@ -19,7 +19,7 @@ class BasicStorer(Storer):
             return fp.read()
 
     def write(self, data_or_io, location: str) -> str:
-        if isinstance(data_or_io, io.BufferedIOBase):
+        if isinstance(data_or_io, io.IOBase):
             with open(location, 'wb') as fp:
                 data_or_io.seek(0)
                 chunk = data_or_io.read(2 ** 20)

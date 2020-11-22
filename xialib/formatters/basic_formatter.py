@@ -30,7 +30,7 @@ class BasicFormatter(Formatter):
                 record_data = self.list_to_record(list_data)
                 yield record_data
         # IO Termination
-        elif isinstance(data_or_io, io.BufferedIOBase):
+        elif isinstance(data_or_io, io.IOBase):
             raw_data = data_or_io.read().decode()
             if from_format == 'record':
                 yield json.loads(raw_data)

@@ -23,14 +23,14 @@ class Formatter(metaclass=abc.ABCMeta):
             self.logger.addHandler(console_handler)
 
     @abc.abstractmethod
-    def _format_to_record(self, data_or_io: Union[io.BufferedIOBase, bytes],
+    def _format_to_record(self, data_or_io: Union[io.IOBase, bytes],
                           from_format: str, **kwargs) -> List[dict]:
         """ To be implemented function
 
         The function to be implemented by customized formatter.
 
         Args:
-            data_or_io (:obj:`io.BufferedIOBase` or :obj:`bytes`): data to be decoded
+            data_or_io (:obj:`io.IOBase` or :obj:`bytes`): data to be decoded
             from_format (str): source format
 
         Yields:
@@ -38,14 +38,14 @@ class Formatter(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError  # pragma: no cover
 
-    def formatter(self, data_or_io: Union[io.BufferedIOBase, bytes],
+    def formatter(self, data_or_io: Union[io.IOBase, bytes],
                   from_format: str, **kwargs) -> Generator[dict, None, None]:
         """ Public function
 
         This function can format data or io flow into python dictionary data.
 
         Args:
-            data_or_io (:obj:`io.BufferedIOBase` or :obj:`bytes`): data to be decoded
+            data_or_io (:obj:`io.IOBase` or :obj:`bytes`): data to be decoded
             from_format (str): source format
 
         Yields:
@@ -59,7 +59,7 @@ class Formatter(metaclass=abc.ABCMeta):
             self.logger.error("Formatter of {} not found at {}".format(from_format, self.__class__.__name__))
             raise TypeError("XIA-000005")
 
-        if not isinstance(data_or_io, (bytes, io.BufferedIOBase)):
+        if not isinstance(data_or_io, (bytes, io.IOBase)):
             self.logger.error("Data type {} not supported".format(data_or_io.__class__.__name__))
             raise TypeError("XIA-000002")
 

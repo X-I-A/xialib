@@ -13,7 +13,7 @@ class BasicDecoder(Decoder):
         super().__init__()
 
     def _encode_to_blob(self, data_or_io, from_encode, **kwargs):
-        if isinstance(data_or_io, io.BufferedIOBase):
+        if isinstance(data_or_io, io.IOBase):
             if from_encode == 'blob':
                 yield data_or_io
             elif from_encode == 'gzip':
