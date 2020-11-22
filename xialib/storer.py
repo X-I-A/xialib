@@ -22,11 +22,11 @@ class Storer(metaclass=abc.ABCMeta):
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
 
-    @abc.abstractmethod
-    def get_io_stream(self, location: str):
-        """ To be implemented function
+    def get_io_stream(self, location: str) -> io.BufferedIOBase:
+        """ To be implemented optionaly function
 
-        The function to be implemented by customized storer to yield an IO flow.
+        The function to be implemented by customized storer to yield an IO flow. Please do not implement it
+        if it is not possible
 
         Args:
             location (:obj:`str`): resource location
