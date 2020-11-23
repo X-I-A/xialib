@@ -7,6 +7,14 @@ Storer Base Class
    :members:
    :private-members:
 
+.. autoclass::  xialib.storer.RWStorer
+   :members:
+   :private-members:
+
+.. autoclass::  xialib.storer.IOStorer
+   :members:
+   :private-members:
+
 Basic Storer
 ------------
 

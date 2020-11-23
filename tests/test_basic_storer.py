@@ -23,3 +23,4 @@ def test_simple_flow(storer):
     assert not storer.remove(dest_file)
     storer.write(data_copy1, dest_file)
     storer.remove(dest_file)
+    assert not storer.exists(dest_file)

@@ -10,9 +10,14 @@ class BasicStorer(IOStorer):
     def __init__(self):
         super().__init__()
 
-    def get_io_stream(self, location: str):
-        with open(location, 'rb') as fp:
-            yield fp
+    def exists(self, location: str):
+        if os.path.exists(location):
+            return True
+        else:
+            return False
+
+    def join(self, *args):
+        return os.path.join(*args)
 
     def read(self, location: str) -> bytes:
         with open(location, 'rb') as fp:
@@ -37,3 +42,14 @@ class BasicStorer(IOStorer):
             return True
         else:
             return False
+
+    def mkdir(self, path: str):
+        os.mkdir(path)
+
+    def get_io_stream(self, location: str):
+        with open(location, 'rb') as fp:
+            yield fp
+
+    def get_io_wb_stream(self, location: str):
+        with open(location, 'wb') as fp:
+            yield fp
