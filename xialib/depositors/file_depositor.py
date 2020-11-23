@@ -52,7 +52,6 @@ class FileDepositor(Depositor):
         doc_content['data_size'] = len(doc_content['data'])
         with open(os.path.join(self.table_path, doc_ref), 'w') as f:
             f.write(json.dumps(doc_content, ensure_ascii=False))
-        doc_content.pop('data')
         return doc_content
 
     def _update_document(self, ref: Any, header: dict, data: bytes):

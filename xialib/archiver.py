@@ -10,16 +10,11 @@ class Archiver(metaclass=abc.ABCMeta):
     Attributes:
         data_encode (:obj:`str`): Each archiver subclass should has its pre-defined data encode
         data_format (:obj:`str`): Each archiver subclass should has its pre-defined data format
-        data_store (:obj:`str`): Each archiver subclass should has its pre-defined data store
         zero_data (:obj:`any`): The data object contains no data
 
-    Note:
-        It is forbidden to create dependency among XIA work units.
-        So we won't use any Decoder, Formatter or Storer here
     """
     data_encode = None
     data_format = None
-    data_store = None
     zero_data = None
 
     def __init__(self, **kwargs):

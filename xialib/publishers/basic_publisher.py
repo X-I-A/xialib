@@ -17,7 +17,7 @@ class BasicPublisher(Publisher):
     def _get_message_id(self) -> str:
         return str(uuid.uuid4())
 
-    def _send(self, destination: str, topic_id: str, header: dict, data):
+    def _send(self, destination: str, topic_id: str, header: dict, data: str):
         file_name = os.path.join(destination, topic_id, self._get_message_id())
         if not os.path.exists(destination):
             os.mkdir(destination)

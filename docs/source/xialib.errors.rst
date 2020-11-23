@@ -16,3 +16,4 @@ Error Codes
 * XIA-000015: File depositor must have a validated deposit_path
 * XIA-000016: Not enough age ranged defined for an aged flow
 * XIA-000017: Updated data is oversized
+* XIA-000018: storer must be type of Storer
