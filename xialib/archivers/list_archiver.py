@@ -1,6 +1,7 @@
 import json
 import base64
 import zipfile
+import hashlib
 from typing import List, Dict
 from functools import reduce
 from xialib.archiver import Archiver
@@ -41,6 +42,9 @@ class ListArchiver(Archiver):
         l_size = vector_size_set[0]
         return [{key: value[i] for key, value in list_data.items() if value[i] is not None} for i in range(l_size)]
 
+    def _get_filename(self, merge_key):
+        return hashlib.md5(merge_key.encode()).hexdigest()[:4] + '-' + merge_key + '.zst'
+
     def _merge_workspace(self):
         field_list = reduce(lambda a, b: set(a) | set(b), self.workspace)
         self.workspace[:] = [{key: [u for i in self.workspace for u in i.get(key, [])] for key in field_list}]
@@ -62,7 +66,7 @@ class ListArchiver(Archiver):
         return self.list_to_record(self.workspace[0])
 
     def _archive_data(self):
-        archive_file_name = self.storer.join(self.table_path, self.merge_key + '.zst')
+        archive_file_name = self.storer.join(self.table_path, self._get_filename(self.merge_key))
         for write_io in self.storer.get_io_wb_stream(archive_file_name):
             with zipfile.ZipFile(write_io, 'w', compression=zipfile.ZIP_DEFLATED) as f:
                 for key, value in self.workspace[0].items():
@@ -72,7 +76,7 @@ class ListArchiver(Archiver):
 
     def append_archive(self, append_merge_key: str, fields: List[str] = None):
         field_list = fields
-        archive_file_name = self.storer.join(self.table_path, append_merge_key + '.zst')
+        archive_file_name = self.storer.join(self.table_path, self._get_filename(append_merge_key))
         for read_io in self.storer.get_io_stream(archive_file_name):
             with zipfile.ZipFile(read_io) as f:
                 fd_list = [item for item in f.infolist() if base64.b32decode(item.filename).decode() in field_list]
@@ -83,4 +87,4 @@ class ListArchiver(Archiver):
 
     def remove_archives(self, merge_key_list: List[str]):
         for merge_key in merge_key_list:
-            self.storer.remove(self.storer.join(self.table_path, merge_key + '.zst'))
+            self.storer.remove(self.storer.join(self.table_path, self._get_filename(merge_key)))
