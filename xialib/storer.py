@@ -22,20 +22,6 @@ class Storer(metaclass=abc.ABCMeta):
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
 
-    def get_io_stream(self, location: str) -> io.IOBase:
-        """ To be implemented optionaly function
-
-        The function to be implemented by customized storer to yield an IO flow. Please do not implement it
-        if it is not possible
-
-        Args:
-            location (:obj:`str`): resource location
-
-        Yields:
-            :obj:`io.IOBase` : IO flow
-        """
-        raise NotImplementedError  # pragma: no cover
-
     @abc.abstractmethod
     def read(self, location: str) -> bytes:
         """ To be implemented function
@@ -50,6 +36,8 @@ class Storer(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError  # pragma: no cover
 
+
+class RWStorer(Storer):
     @abc.abstractmethod
     def write(self, data_or_io: Union[io.IOBase, bytes], location: str) -> str:
         """ To be implemented function
@@ -78,3 +66,24 @@ class Storer(metaclass=abc.ABCMeta):
             True if ok else False
         """
         raise NotImplementedError  # pragma: no cover
+
+
+class IOStorer(RWStorer):
+    @abc.abstractmethod
+    def get_io_stream(self, location: str) -> io.IOBase:
+        """ To be implemented optionaly function
+
+        The function to be implemented by customized storer to yield an IO flow. Please do not implement it
+        if it is not possible
+
+        Args:
+            location (:obj:`str`): resource location
+
+        Yields:
+            :obj:`io.IOBase` : IO flow
+        """
+        raise NotImplementedError  # pragma: no cover
+
+
+
+

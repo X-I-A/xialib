@@ -1,8 +1,8 @@
 import io
 import os
-from xialib.storer import Storer
+from xialib.storer import IOStorer
 
-class BasicStorer(Storer):
+class BasicStorer(IOStorer):
     """Local file system based storer
     """
     store_types = ['file']
