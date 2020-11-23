@@ -23,6 +23,34 @@ class Storer(metaclass=abc.ABCMeta):
             self.logger.addHandler(console_handler)
 
     @abc.abstractmethod
+    def exists(self, location: str) -> bool:
+        """ To be implemented function
+
+        The function to be implemented by customized storer to check if the specified location exists
+
+        Args:
+            location (:obj:`str`): resource location
+
+        Returns:
+            True if exists else False
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
+    def join(self, *args) -> str:
+        """ To be implemented function
+
+        The function to be implemented by customized storer to join all parameters
+
+        Args:
+            location (:obj:`str`): resource location
+
+        Returns:
+            :obj:`str` : joined path
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
     def read(self, location: str) -> bytes:
         """ To be implemented function
 
@@ -67,14 +95,41 @@ class RWStorer(Storer):
         """
         raise NotImplementedError  # pragma: no cover
 
+    @abc.abstractmethod
+    def mkdir(self, path: str) -> bool:
+        """ To be implemented function
+
+        The function to be implemented to create a directory at the specified path
+
+        Args:
+            path (:obj:`str`): directory path to be created
+
+        Returns:
+            True if ok else False
+        """
+        raise NotImplementedError  # pragma: no cover
+
 
 class IOStorer(RWStorer):
     @abc.abstractmethod
-    def get_io_stream(self, location: str) -> io.IOBase:
+    def get_io_stream(self, location: str):
         """ To be implemented optionaly function
 
-        The function to be implemented by customized storer to yield an IO flow. Please do not implement it
-        if it is not possible
+        The function to be implemented by customized storer to yield an IO flow.
+
+        Args:
+            location (:obj:`str`): resource location
+
+        Yields:
+            :obj:`io.IOBase` : IO flow
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
+    def get_io_wb_stream(self, location: str):
+        """ To be implemented optionaly function
+
+        The function to be implemented by customized storer to yield an IO Writable flow.
 
         Args:
             location (:obj:`str`): resource location

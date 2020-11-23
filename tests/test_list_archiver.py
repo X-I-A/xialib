@@ -77,3 +77,5 @@ def test_archive_zero_data(archiver):
 def test_exceptions(archiver):
     with pytest.raises(ValueError):
         a2 = ListArchiver(archive_path='wrong path')
+    with pytest.raises(TypeError):
+        a2 = ListArchiver(storer=object(), archive_path='wrong path')
