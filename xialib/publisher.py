@@ -36,6 +36,21 @@ class Publisher(metaclass=abc.ABCMeta):
         return header, data
 
     @abc.abstractmethod
+    def check_destination(self, destination: str, topic_id: str) -> bool:
+        """ To be implemented public function
+
+        This function should be implemented by customized publisher to check if the required destination is available
+
+        Args:
+            destination (:obj:`str`): Destination
+            topic_id (:obj:`str`): Topic ID
+
+        Returns:
+            True if successful else False
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
     def _send(self, destination: str, topic_id: str, header: dict, data: Union[str, bytes]) -> str:
         """ To be implemented function
 

@@ -51,6 +51,12 @@ def test_header_with_file(publisher):
     os.rmdir(os.path.join('.', 'input', 'tmpdir', 'topic'))
     os.rmdir(os.path.join('.', 'input', 'tmpdir'))
 
+def test_check_destination(publisher):
+    assert publisher.check_destination('.', 'input')
+    assert publisher.check_destination(os.path.join('.', 'publisher'), 'topic')
+    os.rmdir(os.path.join('.', 'publisher'))
+    assert not publisher.check_destination(os.path.join('.', 'err', 'err'), 'err')
+
 def test_exceptions(publisher):
     header_2['data_encode'] = 'zip'
     with pytest.raises(ValueError):
