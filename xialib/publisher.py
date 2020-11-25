@@ -92,4 +92,7 @@ class Publisher(metaclass=abc.ABCMeta):
             if header.get('data_encode', '') != 'gzip' and header.get('data_store', '') == 'body':
                 raise ValueError("XIA-000009")
             header, data = self._preapare(header, data)
+        else:
+            if not self.blob_support and isinstance(data, bytes):
+                data = data.decode()
         return self._send(destination, topic_id, header, data)
