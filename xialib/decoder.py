@@ -68,13 +68,17 @@ class Decoder(metaclass=abc.ABCMeta):
 
         Args:
             data_or_io (:obj:`io.IOBase` or :obj:`bytes`): data to be decoded
-            from_encode (str): source encode
+            from_encode (`str`): source encode
 
         Returns:
             :obj:`io.IOBase` or :obj:`bytes`
 
-        Note:
+        Notes:
             Use :obj:`io.IOBase` if it is possible
+
+        Notes:
+            If the customized data encode is based on `str`, please do the decode in the implemented method
+
         """
         raise NotImplementedError  # pragma: no cover
 
@@ -110,6 +114,8 @@ class Decoder(metaclass=abc.ABCMeta):
 
         # Blob type
         if from_encode in ['blob', 'flat', 'gzip', 'b64g']:
+            if from_encode in ['flat', 'b64g'] and isinstance(data_or_io, bytes):
+                data_or_io = data_or_io.decode()
             if to_encode == 'blob':
                 for output in self._encode_to_blob(data_or_io, from_encode):
                     yield output
