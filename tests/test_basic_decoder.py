@@ -85,7 +85,6 @@ def test_io_blob_flow(decoder):
         for content in decoder.decoder(f, 'b64g', 'blob'):
             assert content == content_dict['blob']
 
-
 def test_exceptions(decoder):
     with pytest.raises(ValueError):
         for conent in decoder.decoder(content_dict['flat'], 'gzip', 'zip'):

@@ -19,6 +19,12 @@ def publisher():
     publisher = BasicPublisher()
     yield publisher
 
+def test_internal_flow(publisher):
+    header = {'topic_id': 'internal', 'table_id': 'merge', 'data_spec': 'internal'}
+    filename = publisher.publish(os.path.join('.', 'input'), 'internal', header, b'[]')
+    os.remove(filename)
+    os.rmdir(os.path.join('.', 'input', 'internal'))
+
 def test_simple_flow(publisher):
     filename = publisher.publish(os.path.join('.', 'input', 'tmpdir'), 'topic', header_1, gzdata_1)
     assert os.path.exists(filename)
