@@ -30,30 +30,34 @@ class Decoder(metaclass=abc.ABCMeta):
 
         if from_encode == to_encode:
             yield data
-        if from_encode == 'gzip' and to_encode == 'flat':
-            yield gzip.decompress(data).decode()
-        elif from_encode == 'b64g' and to_encode == 'flat':
-            yield gzip.decompress(base64.b64decode(data.encode())).decode()
-        elif from_encode == 'blob' and to_encode == 'flat':
-            yield data.decode()
-        elif from_encode == 'flat' and to_encode == 'b64g':
-            yield base64.b64encode(gzip.compress(data.encode())).decode()
-        elif from_encode == 'gzip' and to_encode == 'b64g':
-            yield base64.b64encode(data).decode()
-        elif from_encode == 'blob' and to_encode == 'b64g':
-            yield base64.b64encode(gzip.compress(data)).decode()
-        elif from_encode == 'flat' and to_encode == 'gzip':
-            yield gzip.compress(data.encode())
-        elif from_encode == 'b64g' and to_encode == 'gzip':
-            yield base64.b64decode(data.encode())
-        elif from_encode == 'blob' and to_encode == 'gzip':
-            yield gzip.compress(data)
-        elif from_encode == 'flat' and to_encode == 'blob':
-            yield data.encode()
-        elif from_encode == 'gzip' and to_encode == 'blob':
-            yield gzip.decompress(data)
-        elif from_encode == 'b64g' and to_encode == 'blob':
-            yield gzip.decompress(base64.b64decode(data.encode()))
+        elif to_encode == 'blob':
+            if from_encode == 'flat':
+                yield data.encode()
+            elif from_encode == 'gzip':
+                yield gzip.decompress(data)
+            elif from_encode == 'b64g':
+                yield gzip.decompress(base64.b64decode(data.encode()))
+        elif to_encode == 'flat':
+            if from_encode == 'gzip':
+                yield gzip.decompress(data).decode()
+            elif from_encode == 'b64g':
+                yield gzip.decompress(base64.b64decode(data.encode())).decode()
+            elif from_encode == 'blob':
+                yield data.decode()
+        elif to_encode == 'b64g':
+            if from_encode == 'flat':
+                yield base64.b64encode(gzip.compress(data.encode())).decode()
+            elif from_encode == 'gzip':
+                yield base64.b64encode(data).decode()
+            elif from_encode == 'blob':
+                yield base64.b64encode(gzip.compress(data)).decode()
+        elif to_encode == 'gzip':
+            if from_encode == 'flat':
+                yield gzip.compress(data.encode())
+            elif from_encode == 'b64g':
+                yield base64.b64decode(data.encode())
+            elif from_encode == 'blob':
+                yield gzip.compress(data)
 
     @abc.abstractmethod
     def _encode_to_blob(self, data_or_io: Union[io.IOBase, bytes],
@@ -64,13 +68,17 @@ class Decoder(metaclass=abc.ABCMeta):
 
         Args:
             data_or_io (:obj:`io.IOBase` or :obj:`bytes`): data to be decoded
-            from_encode (str): source encode
+            from_encode (`str`): source encode
 
         Returns:
             :obj:`io.IOBase` or :obj:`bytes`
 
-        Note:
+        Notes:
             Use :obj:`io.IOBase` if it is possible
+
+        Notes:
+            If the customized data encode is based on `str`, please do the decode in the implemented method
+
         """
         raise NotImplementedError  # pragma: no cover
 
@@ -106,6 +114,8 @@ class Decoder(metaclass=abc.ABCMeta):
 
         # Blob type
         if from_encode in ['blob', 'flat', 'gzip', 'b64g']:
+            if from_encode in ['flat', 'b64g'] and isinstance(data_or_io, bytes):
+                data_or_io = data_or_io.decode()
             if to_encode == 'blob':
                 for output in self._encode_to_blob(data_or_io, from_encode):
                     yield output

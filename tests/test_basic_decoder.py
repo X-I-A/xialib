@@ -47,6 +47,15 @@ def test_gzip_b64g_flow(decoder):
                 for c4 in decoder.decoder(c3, 'gzip', 'flat'):
                     assert content_dict['flat'] == c4
 
+def test_io_terminate_flow(decoder):
+    with open(os.path.join('.', 'input', 'module_specific', 'decoder', 'person_simple.flat'), 'rb') as f:
+        data = f.read()
+        for content in decoder.decoder(data, 'blob', 'flat'):
+            assert content == content_dict['flat']
+    with open(os.path.join('.', 'input', 'module_specific', 'decoder', 'person_simple.b64g'), 'rb') as f:
+        data = f.read()
+        for content in decoder.decoder(data, 'b64g', 'flat'):
+            assert content == content_dict['flat']
 
 def test_io_flat_flow(decoder):
     with open(os.path.join('.', 'input', 'module_specific', 'decoder', 'person_simple.gzip'), 'rb') as f:
