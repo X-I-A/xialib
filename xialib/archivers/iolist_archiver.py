@@ -4,17 +4,13 @@ import zipfile
 import hashlib
 from typing import List, Dict
 from functools import reduce
-from xialib.archiver import Archiver
+from xialib.archiver import ListArchiver
 from xialib.storer import IOStorer
 from xialib.storers.basic_storer import BasicStorer
 
-class ListArchiver(Archiver):
-    """List archivers conver json data to columns and save each column as a seprated file of a zip-archive
+class IOListArchiver(ListArchiver):
+    """Basic List archiver use local file system to save archive data
     """
-    data_encode = 'blob'
-    data_format = 'zst'
-    zero_data = dict()
-
     def __init__(self, archive_path, storer=BasicStorer(), **kwargs):
         super().__init__()
         if not isinstance(storer, IOStorer):
@@ -29,25 +25,8 @@ class ListArchiver(Archiver):
             self.logger.error("{} does not exist".format(archive_path), extra=self.log_context)
             raise ValueError("XIA-000012")
 
-    def record_to_list(self, record_data: List[dict]) -> Dict[str, list]:
-        if not record_data:
-            return dict()
-        field_list = reduce(lambda a, b: set(a) | set(b), record_data)
-        return {k: [x.get(k, None) for x in record_data] for k in field_list}
-
-    def list_to_record(self, list_data: Dict[str, list]) -> List[dict]:
-        if not list_data:
-            return list()
-        vector_size_set = [len(value) for key, value in list_data.items()]
-        l_size = vector_size_set[0]
-        return [{key: value[i] for key, value in list_data.items() if value[i] is not None} for i in range(l_size)]
-
     def _get_filename(self, merge_key):
         return hashlib.md5(merge_key.encode()).hexdigest()[:4] + '-' + merge_key + '.zst'
-
-    def _merge_workspace(self):
-        field_list = reduce(lambda a, b: set(a) | set(b), self.workspace)
-        self.workspace[:] = [{key: [u for i in self.workspace for u in i.get(key, [])] for key in field_list}]
 
     def _set_current_topic_table(self, topic_id: str, table_id: str):
         self.topic_path = self.storer.join(self.archive_path, self.topic_id)
@@ -56,14 +35,6 @@ class ListArchiver(Archiver):
             self.storer.mkdir(self.topic_path)
         if not self.storer.exists(self.table_path):
             self.storer.mkdir(self.table_path)
-
-    def add_data(self, data: List[dict]):
-        list_data = self.record_to_list(data)
-        self.workspace_size += len(json.dumps(list_data))
-        self.workspace.append(list_data)
-
-    def _get_data(self):
-        return self.list_to_record(self.workspace[0])
 
     def _archive_data(self):
         archive_file_name = self.storer.join(self.table_path, self._get_filename(self.merge_key))

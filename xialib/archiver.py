@@ -1,6 +1,8 @@
 import abc
+import json
 import logging
-from typing import List
+from typing import List, Dict
+from functools import reduce
 
 __all__ = ['Archiver']
 
@@ -196,3 +198,35 @@ class Archiver(metaclass=abc.ABCMeta):
              merge_key_list (:obj:`list` of :obj:`str`): The archives of the list will be deleted from storage
         """
         raise NotImplementedError  # pragma: no cover
+
+
+class ListArchiver(Archiver):
+    data_encode = 'blob'
+    data_format = 'zst'
+    zero_data = dict()
+
+    def record_to_list(self, record_data: List[dict]) -> Dict[str, list]:
+        if not record_data:
+            return dict()
+        field_list = reduce(lambda a, b: set(a) | set(b), record_data)
+        return {k: [x.get(k, None) for x in record_data] for k in field_list}
+
+    def list_to_record(self, list_data: Dict[str, list]) -> List[dict]:
+        if not list_data:
+            return list()
+        vector_size_set = [len(value) for key, value in list_data.items()]
+        l_size = vector_size_set[0]
+        return [{key: value[i] for key, value in list_data.items() if value[i] is not None} for i in range(l_size)]
+
+    def _merge_workspace(self):
+        field_list = reduce(lambda a, b: set(a) | set(b), self.workspace)
+        self.workspace[:] = [{key: [u for i in self.workspace for u in i.get(key, [])] for key in field_list}]
+
+    def add_data(self, data: List[dict]):
+        list_data = self.record_to_list(data)
+        self.workspace_size += len(json.dumps(list_data))
+        self.workspace.append(list_data)
+
+    def _get_data(self):
+        return self.list_to_record(self.workspace[0])
+
