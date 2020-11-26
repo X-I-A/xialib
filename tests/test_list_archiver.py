@@ -3,7 +3,7 @@ import time
 import datetime
 import json
 import pytest
-from xialib import ListArchiver
+from xialib import IOListArchiver
 
 
 def get_current_timestamp():
@@ -21,7 +21,7 @@ field_list_01 = ['id', 'first_name', 'city', 'height', 'children', 'preferred_co
 
 @pytest.fixture(scope='module')
 def archiver():
-    archiver = ListArchiver(archive_path=os.path.join('.', 'input', 'module_specific', 'archiver'))
+    archiver = IOListArchiver(archive_path=os.path.join('.', 'input', 'module_specific', 'archiver'))
     archiver.set_current_topic_table('test-001', 'person_complex')
     yield archiver
     os.rmdir(os.path.join(archiver.archive_path, 'test-001', 'person_complex'))
@@ -76,6 +76,6 @@ def test_archive_zero_data(archiver):
 
 def test_exceptions(archiver):
     with pytest.raises(ValueError):
-        a2 = ListArchiver(archive_path='wrong path')
+        a2 = IOListArchiver(archive_path='wrong path')
     with pytest.raises(TypeError):
-        a2 = ListArchiver(storer=object(), archive_path='wrong path')
+        a2 = IOListArchiver(storer=object(), archive_path='wrong path')
