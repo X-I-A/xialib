@@ -6,11 +6,35 @@ __all__ = ['Translator']
 
 
 class Translator(metaclass=abc.ABCMeta):
-    """
+    """Translate customer data header / body to x-i-a One
+
     Attributes:
         spec_list (:obj:`list`): Data specifications supported by Translator
+
     """
     spec_list = list()
+
+    prefix_dict = {
+        'null': [],
+        'blob': [],
+        'char': [],
+        'c': ['char'],
+        'n': ['char', 'c_@p2@'],
+        'd': ['char', 'c_@p2+1@'],
+        'date': ['char', 'c_@format_len@'],
+        'time': ['char', 'c_@format_len@'],
+        'datetime': ['char', 'c_@format_len@'],
+        'json': ['char'],
+        'int': [],
+        'bool': ['int', 'i_1'],
+        'i': ['int'],
+        'unix-time': ['int', 'i_4'],
+        'ui': ['int'],
+        'real': [],
+        'float': ['real'],
+        'double': ['real'],
+        'jd': ['real', 'double']
+    }
 
     def __init__(self, **kwargs):
         self.translate_method = None
@@ -21,6 +45,32 @@ class Translator(metaclass=abc.ABCMeta):
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
+
+    @classmethod
+    def _type_assign(cls, type_item: str, type_syntax: list, type_format: str) -> str:
+        if '@p2@' in type_item:
+            type_item = type_item.replace('@p2@', type_syntax[1])
+        if '@p2+1@' in type_item:
+            type_item = type_item.replace('@p2+1@', str(int(type_syntax[1]) + 1))
+        if '@format_len@' in type_item:
+            type_item = type_item.replace('@format_len@', str(len(type_format)))
+        return type_item
+
+    @classmethod
+    def get_type_chain(cls, src_type: str, type_format: str = None) -> List[str]:
+        """Public function
+
+        The function returns all compatible types order by hiearchy
+
+        Args:
+            type (:obj:`str`): input type
+            type (:obj:`str`): input format
+        """
+        type_syntax = src_type.split('_')
+        type_chain = cls.prefix_dict.get(type_syntax[0])
+        type_chain = [cls._type_assign(item, type_syntax, type_format) for item in type_chain]
+        type_chain.append(src_type)
+        return type_chain
 
     @abc.abstractmethod
     def compile(self, header: dict, data: List[dict]):

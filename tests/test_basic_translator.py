@@ -45,6 +45,26 @@ def test_normal_body(translator):
         assert result_line['_SEQ'] == '2020111119150000000'
         result_line.pop('_SEQ')
 
+def test_type_transcode(translator):
+    assert translator.get_type_chain('null') == ['null']
+    assert translator.get_type_chain('blob') == ['blob']
+    assert translator.get_type_chain('char') == ['char']
+    assert translator.get_type_chain('c_1') == ['char', 'c_1']
+    assert translator.get_type_chain('n_8') == ['char', 'c_8', 'n_8']
+    assert translator.get_type_chain('d_13_3') == ['char', 'c_14', 'd_13_3']
+    assert translator.get_type_chain('date', 'yyyymmdd') == ['char', 'c_8', 'date']
+    assert translator.get_type_chain('time', 'hhmmss') == ['char', 'c_6', 'time']
+    assert translator.get_type_chain('datetime', 'yyyymmddhhmmssffffff') == ['char', 'c_20', 'datetime']
+    assert translator.get_type_chain('json') == ['char', 'json']
+    assert translator.get_type_chain('int') == ['int']
+    assert translator.get_type_chain('bool') == ['int', 'i_1', 'bool']
+    assert translator.get_type_chain('i_1') == ['int', 'i_1']
+    assert translator.get_type_chain('ui_1') == ['int', 'ui_1']
+    assert translator.get_type_chain('real') == ['real']
+    assert translator.get_type_chain('float') == ['real', 'float']
+    assert translator.get_type_chain('double') == ['real', 'double']
+    assert translator.get_type_chain('jd') == ['real', 'double', 'jd']
+
 def test_exceptions(translator):
     with pytest.raises(NotImplementedError):
         for line in header['data']:
