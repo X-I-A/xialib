@@ -7,10 +7,13 @@ Archiver Base Class
    :members:
    :private-members:
 
-List Archiver
--------------
+.. autoclass::  xialib.archiver.ListArchiver
+   :members:
+   :private-members:
 
-.. autoclass:: xialib.archivers.list_archiver.ListArchiver
+IOList Archiver
+---------------
+.. autoclass:: xialib.archivers.iolist_archiver.IOListArchiver
    :members:
    :show-inheritance:
 

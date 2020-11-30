@@ -17,3 +17,4 @@ Error Codes
 * XIA-000016: Not enough age ranged defined for an aged flow
 * XIA-000017: Updated data is oversized
 * XIA-000018: storer must be type of IOStorer
+* XIA-000019: connection must an Connection defined by PEP249

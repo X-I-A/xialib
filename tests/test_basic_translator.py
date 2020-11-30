@@ -51,7 +51,7 @@ def test_type_transcode(translator):
     assert translator.get_type_chain('char') == ['char']
     assert translator.get_type_chain('c_1') == ['char', 'c_1']
     assert translator.get_type_chain('n_8') == ['char', 'c_8', 'n_8']
-    assert translator.get_type_chain('d_13_3') == ['char', 'c_14', 'd_13_3']
+    assert translator.get_type_chain('d_13_3') == ['real', 'd_13_3']
     assert translator.get_type_chain('date', 'yyyymmdd') == ['char', 'c_8', 'date']
     assert translator.get_type_chain('time', 'hhmmss') == ['char', 'c_6', 'time']
     assert translator.get_type_chain('datetime', 'yyyymmddhhmmssffffff') == ['char', 'c_20', 'datetime']

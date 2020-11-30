@@ -1,3 +1,4 @@
+from xialib import adaptors
 from xialib import archivers
 from xialib import decoders
 from xialib import depositors
@@ -7,6 +8,7 @@ from xialib import storers
 from xialib import subscribers
 from xialib import translators
 
+from xialib.adaptors import SQLiteAdaptor
 from xialib.archivers import IOListArchiver
 from xialib.decoders import BasicDecoder, ZipDecoder
 from xialib.depositors import FileDepositor
@@ -17,6 +19,7 @@ from xialib.subscribers import BasicSubscriber
 from xialib.translators import BasicTranslator, SapTranslator
 
 __all__ = \
+    adaptors.__all__ + \
     archivers.__all__ + \
     decoders.__all__ + \
     depositors.__all__ + \
@@ -26,4 +29,4 @@ __all__ = \
     subscribers.__all__ + \
     translators.__all__
 
-__version__ = "0.1.21"
+__version__ = "0.1.22"
