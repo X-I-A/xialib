@@ -1,0 +1,122 @@
+import os
+import json
+import sqlite3
+import pytest
+from xialib import SQLiteAdaptor
+
+with open(os.path.join('.', 'input', 'person_simple', 'schema.json'), encoding='utf-8') as fp:
+    field_data = json.load(fp)
+
+table_id = "...simple_person"
+new_table_id = "...simple_person_2"
+sql_count = "SELECT COUNT(*) FROM simple_person"
+sql_raw_count = "SELECT COUNT(*) FROM simple_person WHERE _AGE > 500"
+sql_upd_count = "SELECT COUNT(*) FROM simple_person WHERE city = 'Paris'"
+
+@pytest.fixture(scope='module')
+def adaptor():
+    conn = sqlite3.connect(':memory:')
+    adaptor = SQLiteAdaptor(connection=conn)
+    yield adaptor
+
+def test_simple_operation(adaptor):
+    with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
+        data_02 = json.load(fp)
+    delete_list = [{"_AGE": 1, "id": 1, "first_name": "Naomi", "last_name": "Gumbrell", "_OP": 'D'}]
+    update_list = [{"_AGE": 2, "id": 2, "first_name": "Rodge", "last_name": "Fratczak", "city": "Paris", "_OP": 'U'}]
+    adaptor.create_table(table_id, {}, field_data)
+    adaptor.upsert_data(table_id, field_data, data_02)
+    c = adaptor.connection.cursor()
+    c.execute(sql_count)
+    assert c.fetchone() == (1000,)
+    adaptor.rename_table(table_id, new_table_id)
+    with pytest.raises(sqlite3.OperationalError):
+        c.execute(sql_count)
+    adaptor.rename_table(new_table_id, table_id)
+    adaptor.upsert_data(table_id, field_data, delete_list)
+    c.execute(sql_count)
+    assert c.fetchone() == (999,)
+    adaptor.upsert_data(table_id, field_data, update_list)
+    c.execute(sql_upd_count)
+    assert c.fetchone() == (1,)
+    adaptor.drop_table(table_id)
+    with pytest.raises(sqlite3.OperationalError):
+        c.execute(sql_count)
+
+def test_raw_operation(adaptor):
+    with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
+        data_02 = json.load(fp)
+    data_03 = list()
+    for item in data_02:
+        item['_AGE'] = item['id']
+        data_03.append(item)
+    adaptor.create_table(table_id, {}, field_data, True)
+    adaptor.insert_raw_data(table_id, field_data, data_03)
+    c = adaptor.connection.cursor()
+    c.execute(sql_raw_count)
+    assert c.fetchone() == (500,)
+    adaptor.drop_table(table_id)
+
+def test_raw_merge_operation(adaptor):
+    with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
+        data_02 = json.load(fp)
+    delete_list = [{"_AGE": 1, "id": 1, "first_name": "Naomi", "last_name": "Gumbrell", "_OP": 'D'}]
+    update_list = [{"_AGE": 2, "id": 2, "first_name": "Rodge", "last_name": "Fratczak", "city": "Paris", "_OP": 'U'}]
+    adaptor.create_table(table_id, {}, field_data)
+    adaptor.upsert_data(table_id, field_data, data_02)
+    adaptor.create_table(new_table_id, {}, field_data, True)
+    adaptor.insert_raw_data(new_table_id, field_data, delete_list + update_list)
+    adaptor.load_raw_data(new_table_id, table_id, field_data)
+    c = adaptor.connection.cursor()
+    c.execute(sql_count)
+    assert c.fetchone() == (999,)
+    c.execute(sql_upd_count)
+    assert c.fetchone() == (1,)
+    adaptor.drop_table(table_id)
+    adaptor.drop_table(new_table_id)
+
+def test_extrem_case_01(adaptor):
+    with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
+        data_02 = json.load(fp)
+    update_list = [{"_AGE": 2, "id": 2, "first_name": "Rodge", "last_name": "Fratczak", "city": "Paris", "_OP": 'U'}]
+    update_list_2 = [{"_AGE": 2, "id": 2, "first_name": "Rodge", "last_name": "Fratczak", "city": "Paris", "_OP": 'U'}]
+    adaptor.create_table(table_id, {}, field_data)
+    adaptor.upsert_data(table_id, field_data, data_02 + update_list + update_list_2)
+    c = adaptor.connection.cursor()
+    c.execute(sql_count)
+    assert c.fetchone() == (1000,)
+    c.execute(sql_upd_count)
+    assert c.fetchone() == (1,)
+    adaptor.drop_table(table_id)
+
+def test_combo_operation(adaptor):
+    with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
+        data_02 = json.load(fp)
+    delete_list = [{"_AGE": 1, "id": 1, "first_name": "Naomi", "last_name": "Gumbrell", "_OP": 'D'}]
+    update_list = [{"_AGE": 2, "id": 2, "first_name": "Rodge", "last_name": "Fratczak", "city": "Paris", "_OP": 'U'}]
+    adaptor.create_table(table_id, {}, field_data)
+    adaptor.upsert_data(table_id, field_data, data_02 + delete_list + update_list)
+    c = adaptor.connection.cursor()
+    c.execute(sql_count)
+    assert c.fetchone() == (999,)
+    c.execute(sql_upd_count)
+    assert c.fetchone() == (1,)
+    adaptor.drop_table(table_id)
+
+def test_combo_replay_operation(adaptor):
+    with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
+        data_02 = json.load(fp)
+    delete_list = [{"_AGE": 1, "id": 1, "first_name": "Naomi", "last_name": "Gumbrell", "_OP": 'D'}]
+    update_list = [{"_AGE": 2, "id": 2, "first_name": "Rodge", "last_name": "Fratczak", "city": "Paris", "_OP": 'U'}]
+    adaptor.create_table(table_id, {}, field_data)
+    adaptor.upsert_data(table_id, field_data, data_02 + delete_list + update_list, True)
+    c = adaptor.connection.cursor()
+    c.execute(sql_count)
+    assert c.fetchone() == (999,)
+    c.execute(sql_upd_count)
+    assert c.fetchone() == (1,)
+    adaptor.drop_table(table_id)
+
+def test_exceptions():
+    with pytest.raises(TypeError):
+        adap = SQLiteAdaptor(connection=object())

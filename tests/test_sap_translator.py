@@ -14,7 +14,7 @@ ddic_data = [{'FIELDNAME': 'F1', 'INTTYPE': 'C', 'LENG': 4, 'FIELDTEXT': 'Field 
              {'FIELDNAME': 'F4', 'INTTYPE': 'D', 'FIELDTEXT': 'Field 4'},
              {'FIELDNAME': 'F5', 'INTTYPE': 'T', 'FIELDTEXT': 'Field 5'}, ]
 
-@pytest.fixture()
+@pytest.fixture(scope='module')
 def translator():
     translator = SapTranslator()
     yield translator
@@ -39,6 +39,6 @@ def test_ddic_header(translator):
     ddic_translated = [translator.get_translated_line(line) for line in ddic_data]
     assert ddic_translated[0].get('type_chain') == ['char', 'c_4']
     assert ddic_translated[1].get('type_chain') == ['char', 'c_4', 'n_4']
-    assert ddic_translated[2].get('type_chain') == ['char', 'c_16', 'd_15_4']
+    assert ddic_translated[2].get('type_chain') == ['real', 'd_15_4']
     assert ddic_translated[3].get('type_chain') == ['char', 'c_8', 'date']
     assert ddic_translated[4].get('type_chain') == ['char', 'c_6', 'time']

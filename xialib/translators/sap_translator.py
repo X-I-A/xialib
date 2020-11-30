@@ -33,6 +33,12 @@ class SapTranslator(Translator):
         '8': ['i_8', None, None],
     }
 
+    slt_op_dict = {
+        'I': 'I',
+        'U': 'U',
+        'D': 'D',
+    }
+
     def __init__(self):
         super().__init__()
         self.line_oper = dict()
@@ -40,7 +46,7 @@ class SapTranslator(Translator):
     def _get_ddic_line(self, line: dict, **kwargs):
         new_line = {'_' + key: value for key, value in line.items()}
         new_line['field_name'] = new_line['_FIELDNAME']
-        new_line['key_flag'] = new_line.get('_KEYFLAG', '')
+        new_line['key_flag'] = new_line.get('_KEYFLAG', '') == 'X'
         new_line['description'] = new_line.get('_FIELDTEXT', '')
         ddic_parse = self.ddic_dict.get(new_line['_INTTYPE']).copy()
         if '@leng@' in ddic_parse[0]:
@@ -58,7 +64,7 @@ class SapTranslator(Translator):
             line.pop('_RECNO')
         else:
             line['_NO'] = line.pop('_RECNO')
-            line['_OP'] = line.pop('IUUT_OPERAT_FLAG')
+            line['_OP'] = self.slt_op_dict.get(line.pop('IUUT_OPERAT_FLAG'))
         return line
 
     def compile(self, header: dict, data: list):

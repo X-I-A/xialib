@@ -18,9 +18,9 @@ class Translator(metaclass=abc.ABCMeta):
         'null': [],
         'blob': [],
         'char': [],
+        'rowid': ['char'],
         'c': ['char'],
         'n': ['char', 'c_@p2@'],
-        'd': ['char', 'c_@p2+1@'],
         'date': ['char', 'c_@format_len@'],
         'time': ['char', 'c_@format_len@'],
         'datetime': ['char', 'c_@format_len@'],
@@ -33,6 +33,7 @@ class Translator(metaclass=abc.ABCMeta):
         'real': [],
         'float': ['real'],
         'double': ['real'],
+        'd': ['real'],
         'jd': ['real', 'double']
     }
 
@@ -50,8 +51,6 @@ class Translator(metaclass=abc.ABCMeta):
     def _type_assign(cls, type_item: str, type_syntax: list, type_format: str) -> str:
         if '@p2@' in type_item:
             type_item = type_item.replace('@p2@', type_syntax[1])
-        if '@p2+1@' in type_item:
-            type_item = type_item.replace('@p2+1@', str(int(type_syntax[1]) + 1))
         if '@format_len@' in type_item:
             type_item = type_item.replace('@format_len@', str(len(type_format)))
         return type_item

@@ -7,6 +7,7 @@ Basic Units
 .. toctree::
    :maxdepth: 4
 
+   xialib.adaptors
    xialib.archivers
    xialib.decoders
    xialib.depositors
