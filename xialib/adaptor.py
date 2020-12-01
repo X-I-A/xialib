@@ -143,7 +143,7 @@ class DbapiAdaptor(Adaptor):
     def __init__(self, connection, **kwargs):
         super().__init__(**kwargs)
         # Duck type check
-        if any([not hasattr(connection, method) for method in ['cursor', 'execute', 'executemany']]):
+        if any([not hasattr(connection, method) for method in ['cursor', 'close', 'commit']]):
             self.logger.error("connection must an Connection defined by PEP249", extra=self.log_context)
             raise TypeError("XIA-000019")
         else:
