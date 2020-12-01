@@ -16,4 +16,3 @@ IOList Archiver
 .. autoclass:: xialib.archivers.iolist_archiver.IOListArchiver
    :members:
    :show-inheritance:
-
