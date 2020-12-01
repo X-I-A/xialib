@@ -118,25 +118,26 @@ class DbapiAdaptor(Adaptor):
     """
 
     type_dict = {}
-    create_sql_template = ' '.join(["CREATE TABLE", "@table_name@", "(@field_types@, ",
-                                    "PRIMARY KEY", "(" + "@key_list@" + "))"])
-    drop_sql_template = ' '.join(["DROP TABLE", "@table_name@"])
-    insert_sql_template = ' '.join(["INSERT INTO", "@table_name@", "VALUES", "(@value_holders@)"])
-    delete_sql_template = ' '.join(["DELETE FROM", "@table_name@", "WHERE", "(@where_key_holders@)"])
-    rename_sql_template = ' '.join(["ALTER TABLE", "@old_table_name@", "RENAME TO", "@new_table_name@"])
-    load_internal_sql = '( IFNULL( r._SEQ, "" ) || IFNULL( r._AGE, "" ) || IFNULL( r._SEQ, "" ) ) > ' + \
-                        '( IFNULL( t._SEQ, "" ) || IFNULL( t._AGE, "" ) || IFNULL( t._SEQ, "" ) ) AND ' + \
-                        "r._OP in ('U', 'D')"
-    load_del_sql_template = ' '.join(["DELETE FROM", "@ori_table_name@",
-                                      "WHERE EXISTS (",
-                                      "SELECT * FROM", "@raw_table_name@",
-                                      "WHERE", "@key_eq_key@",
-                                      "AND _OP in ( 'U', 'D' )", ")"])
-    load_ins_sql_template = ' '.join(["INSERT INTO", "@ori_table_name@",
-                                      "SELECT", "@field_list@", "FROM", "@raw_table_name@", "t",
-                                      "WHERE NOT EXISTS (",
-                                      "SELECT * FROM", "@raw_table_name@", "r",
-                                      "WHERE", load_internal_sql, ")"])
+    # Variable Name: @table_name@, @field_types@, @key_list@
+    create_sql_template = "CREATE TABLE {} ( {}, PRIMARY KEY( {} ))"
+    # Variable Name: @table_name@
+    drop_sql_template = "DROP TABLE {}"
+    # Variable Name: @table_name@, @value_holders@
+    insert_sql_template = "INSERT INTO {} VALUES ( {} )"
+    # Variable Name: @table_name@, @where_key_holders@
+    delete_sql_template = "DELETE FROM {} WHERE {}"
+    # Variable Name: @old_table_name@, @new_table_name@
+    rename_sql_template = "ALTER TABLE {} RENAME TO {}"
+    obs_insert_sql = ("(IFNULL(r._SEQ, '') || IFNULL(r._AGE, '') || IFNULL(r._SEQ, '')) > "
+                      "(IFNULL(t._SEQ, '') || IFNULL(t._AGE, '') || IFNULL(t._SEQ, '')) "
+                      "AND r._OP in ('U', 'D')")
+    # Variable Name: @ori_table_name@, @raw_table_name@, @key_eq_key@
+    load_del_sql_template = ("DELETE FROM {} WHERE EXISTS ( "
+                             "SELECT * FROM {} WHERE {} AND _OP in ( 'U', 'D' ) )")
+    # Variable Name: @ori_table_name@, @field_list@, @raw_table_name@, @raw_table_name@, @obs_insert_sql@
+    load_ins_sql_template = ("INSERT INTO {} "
+                             "SELECT {} FROM {} t WHERE NOT EXISTS ( "
+                             "SELECT * FROM {} r WHERE {} )")
 
 
     def __init__(self, connection, **kwargs):
@@ -147,6 +148,9 @@ class DbapiAdaptor(Adaptor):
             raise TypeError("XIA-000019")
         else:
             self.connection = connection
+
+    def _sql_safe(self, input: str) -> str:
+        return input.replace(';', '')
 
     def drop_table(self, table_id: str):
         cur = self.connection.cursor()
@@ -169,12 +173,9 @@ class DbapiAdaptor(Adaptor):
         cur.execute(sql)
 
     def rename_table(self, old_table_id: str, new_table_id: str):
-        old_table_name = self._get_table_name(old_table_id)
-        new_table_name = self._get_table_name(new_table_id)
+        rename_sql = self.rename_sql_template.format(self._sql_safe(self._get_table_name(old_table_id)),
+                                                     self._sql_safe(self._get_table_name(new_table_id)))
         cur = self.connection.cursor()
-        rename_sql = self.rename_sql_template.\
-            replace('@old_table_name@', old_table_name).\
-            replace('@new_table_name@', new_table_name)
         cur.execute(rename_sql)
 
     def insert_raw_data(self, table_id: str, field_data: List[dict], data: List[dict], **kwargs):
@@ -276,14 +277,12 @@ class DbapiAdaptor(Adaptor):
         raise NotImplementedError  # pragma: no cover
 
     def _get_create_sql(self, table_id: str, meta_data: dict, field_data: List[dict]):
-        return self.create_sql_template.\
-            replace('@table_name@', self._get_table_name(table_id)).\
-            replace('@field_types@', self._get_field_types(field_data)).\
-            replace('@key_list@', self._get_key_list(field_data))
+        return self.create_sql_template.format(self._sql_safe(self._get_table_name(table_id)),
+                                               self._sql_safe(self._get_field_types(field_data)),
+                                               self._sql_safe(self._get_key_list(field_data)))
 
     def _get_drop_sql(self, table_id: str):
-        return self.drop_sql_template.\
-            replace('@table_name@', self._get_table_name(table_id))
+        return self.drop_sql_template.format(self._sql_safe(self._get_table_name(table_id)))
 
     @abc.abstractmethod
     def _get_insert_sql(self, table_id: str, field_data: List[dict]):
@@ -294,18 +293,22 @@ class DbapiAdaptor(Adaptor):
         raise NotImplementedError  # pragma: no cover
 
     def _get_load_del_sql(self, raw_table_id: str, tar_table_id: str, field_data: List[dict]):
-        return self.load_del_sql_template.\
-            replace('@ori_table_name@', self._get_table_name(tar_table_id)).\
-            replace('@raw_table_name@', self._get_table_name(raw_table_id)).\
-            replace('@key_eq_key@', self._get_key_eq_key(field_data,
-                                                         self._get_table_name(tar_table_id),
-                                                         self._get_table_name(raw_table_id)))
+        raw_table_name = self._get_table_name(raw_table_id)
+        tar_table_name = self._get_table_name(tar_table_id)
+        return self.load_del_sql_template.format(self._sql_safe(tar_table_name),
+                                                 self._sql_safe(raw_table_name),
+                                                 self._sql_safe(self._get_key_eq_key(field_data,
+                                                                                     tar_table_name,
+                                                                                     raw_table_name)))
 
     def _get_load_ins_sql(self, raw_table_id: str, tar_table_id: str, field_data: List[dict]):
-        return self.load_ins_sql_template.\
-            replace('@ori_table_name@', self._get_table_name(tar_table_id)).\
-            replace('@raw_table_name@', self._get_table_name(raw_table_id)).\
-            replace('@field_list@', self._get_field_list(field_data))
+        raw_table_name = self._get_table_name(raw_table_id)
+        tar_table_name = self._get_table_name(tar_table_id)
+        return self.load_ins_sql_template.format(self._sql_safe(tar_table_name),
+                                                 self._sql_safe(self._get_field_list(field_data)),
+                                                 self._sql_safe(raw_table_name),
+                                                 self._sql_safe(raw_table_name),
+                                                 self._sql_safe(self.obs_insert_sql))
 
 class DbapiQmarkAdaptor(DbapiAdaptor):
     """Adaptor for databases supporting PEP 249 with paramstyple qmark
@@ -332,11 +335,9 @@ class DbapiQmarkAdaptor(DbapiAdaptor):
         return value_tuples
 
     def _get_insert_sql(self, table_id: str, field_data: List[dict]):
-        return self.insert_sql_template.\
-            replace('@table_name@', self._get_table_name(table_id)).\
-            replace('@value_holders@', self._get_value_holders(field_data))
+        return self.insert_sql_template.format(self._sql_safe(self._get_table_name(table_id)),
+                                               self._sql_safe(self._get_value_holders(field_data)))
 
     def _get_delete_sql(self, table_id: str, key_field_data: List[dict]):
-        return self.delete_sql_template.\
-            replace('@table_name@', self._get_table_name(table_id)).\
-            replace('@where_key_holders@', self._get_where_key_holders(key_field_data))
+        return self.delete_sql_template.format(self._sql_safe(self._get_table_name(table_id)),
+                                               self._sql_safe(self._get_where_key_holders(key_field_data)))
