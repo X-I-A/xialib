@@ -7,36 +7,39 @@ class SapTranslator(Translator):
     spec_list = ['slt', 'ddic']
 
     ddic_dict = {
-        'C': ['c_@leng@', None, None],
-        'N': ['n_@leng@', None, None],
-        'D': ['date', 'YYYYMMDD', None],
-        'T': ['time', 'HHMMSS', None],
-        'X': ['blob', None, 'b16'],
-        'I': ['i_@leng@', None, None],
-        'b': ['i_@leng@', None, None],
-        's': ['i_@leng@', None, None],
-        'P': ['d_@leng@_@decimals@', None, None],
-        'F': ['float', None, None],
-        'g': ['char', None, None],
-        'y': ['blob', None, None],
-        'u': ['json', None, None],
-        'v': ['json', None, None],
-        'h': ['json', None, None],
-        'V': ['char', None, None],
-        'r': ['json', None, None],
-        'l': ['json', None, None],
-        'a': ['float', None, None],
-        'e': ['double', None, None],
-        'j': ['c_1', None, None],
-        'k': ['c_1', None, None],
-        'z': ['json', None, None],
-        '8': ['i_8', None, None],
+        'C': ['c_@leng@', None, None, ''],
+        'N': ['n_@leng@', None, None, '0*@leng@'],
+        'D': ['date', 'YYYYMMDD', None, '00000000'],
+        'T': ['time', 'HHMMSS', None, '000000'],
+        'X': ['blob', None, 'b16', ''],
+        'I': ['i_@leng@', None, None, 0],
+        'b': ['i_@leng@', None, None, None],
+        's': ['i_@leng@', None, None, None],
+        'P': ['d_@leng@_@decimals@', None, None, 0],
+        'F': ['float', None, None, 0.0],
+        'g': ['char', None, None, None],
+        'y': ['blob', None, None, None],
+        'u': ['json', None, None, None],
+        'v': ['json', None, None, None],
+        'h': ['json', None, None, None],
+        'V': ['char', None, None, None],
+        'r': ['json', None, None, None],
+        'l': ['json', None, None, None],
+        'a': ['float', None, None, None],
+        'e': ['double', None, None, None],
+        'j': ['c_1', None, None, None],
+        'k': ['c_1', None, None, None],
+        'z': ['json', None, None, None],
+        '8': ['i_8', None, None, None],
     }
 
     slt_op_dict = {
         'I': 'I',
         'U': 'U',
+        'N': 'U',
         'D': 'D',
+        'A': 'D',
+        'M': 'D',
     }
 
     def __init__(self):
@@ -56,6 +59,10 @@ class SapTranslator(Translator):
         new_line['type_chain'] = self.get_type_chain(ddic_parse[0], ddic_parse[1])
         new_line['format'] = ddic_parse[1]
         new_line['encode'] = ddic_parse[2]
+        if isinstance(ddic_parse[3], str) and '*@leng@' in ddic_parse[3]:
+            new_line['default'] = ddic_parse[3][0] * new_line['_LENG']
+        else:
+            new_line['default'] = ddic_parse[3]
         return new_line
 
     def _get_slt_line(self, line: dict, **kwargs):

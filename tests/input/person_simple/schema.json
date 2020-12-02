@@ -13,7 +13,8 @@
       "type_chain": ["char"],
       "description": "First Name",
       "format": null,
-      "encode": null
+      "encode": null,
+      "default": ""
     },
     {
       "field_name": "last_name",
@@ -21,7 +22,8 @@
       "type_chain": ["char"],
       "description": "Last Name",
       "format": null,
-      "encode": null
+      "encode": null,
+      "default": ""
     },
     {
       "field_name": "email",
@@ -61,7 +63,8 @@
       "type_chain": ["int", "i_4"],
       "description": "Weight",
       "format": null,
-      "encode": null
+      "encode": null,
+      "default": 0
     },
     {
       "field_name": "height",
