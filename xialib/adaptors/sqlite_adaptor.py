@@ -13,6 +13,14 @@ class SQLiteAdaptor(DbapiQmarkAdaptor):
         'BLOB': ['blob']
     }
 
+    def _get_field_type(self, type_chain: list):
+        for type in reversed(type_chain):
+            for key, value in self.type_dict.items():
+                if type in value:
+                    return key
+        self.logger.error("{} Not supported".format(json.dumps(type_chain)), extra=self.log_context)  # pragma: no cover
+        raise TypeError("XIA-000020")  # pragma: no cover
+
     def _get_field_types(self, field_data: List[dict]):
         field_types = list()
         for field in field_data:
