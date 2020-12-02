@@ -19,21 +19,21 @@ class Translator(metaclass=abc.ABCMeta):
         'blob': [],
         'char': [],
         'rowid': ['char'],
-        'c': ['char'],
-        'n': ['char', 'c_@p2@'],
+        'c_': ['char'],
+        'n_': ['char', 'c_@p2@'],
         'date': ['char', 'c_@format_len@'],
         'time': ['char', 'c_@format_len@'],
         'datetime': ['char', 'c_@format_len@'],
         'json': ['char'],
         'int': [],
         'bool': ['int', 'i_1'],
-        'i': ['int'],
+        'i_': ['int'],
         'unix-time': ['int', 'i_4'],
-        'ui': ['int'],
+        'ui_': ['int'],
         'real': [],
         'float': ['real'],
         'double': ['real'],
-        'd': ['real'],
+        'd_': ['real'],
         'jd': ['real', 'double']
     }
 
@@ -66,7 +66,10 @@ class Translator(metaclass=abc.ABCMeta):
             type (:obj:`str`): input format
         """
         type_syntax = src_type.split('_')
-        type_chain = cls.prefix_dict.get(type_syntax[0])
+        if len(type_syntax) > 1:
+            type_chain = cls.prefix_dict.get(type_syntax[0] + '_')
+        else:
+            type_chain = cls.prefix_dict.get(type_syntax[0])
         type_chain = [cls._type_assign(item, type_syntax, type_format) for item in type_chain]
         type_chain.append(src_type)
         return type_chain

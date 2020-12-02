@@ -239,12 +239,9 @@ class DbapiAdaptor(Adaptor):
         table_name = schema + '.' + table_name if schema else table_name
         return table_name
 
+    @abc.abstractmethod
     def _get_field_type(self, type_chain: list):
-        for type in reversed(type_chain):
-            for key, value in self.type_dict.items():
-                if type in value:
-                    return key
-        return 'OBJECT'  # pragma: no cover
+        raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
     def _get_field_types(self, field_data: List[dict]) -> str:
