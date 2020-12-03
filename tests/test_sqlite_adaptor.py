@@ -39,6 +39,7 @@ def test_simple_operation(adaptor):
     adaptor.upsert_data(table_id, field_data, update_list)
     c.execute(sql_upd_count)
     assert c.fetchone() == (1,)
+    adaptor.extend_column(table_id, 'dummy', 'dummy', 'dummy')
     adaptor.drop_table(table_id)
     with pytest.raises(sqlite3.OperationalError):
         c.execute(sql_count)

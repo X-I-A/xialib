@@ -10,6 +10,16 @@ __all__ = ['Adaptor']
 
 
 class Adaptor(metaclass=abc.ABCMeta):
+
+    _age_field = {'field_name': '_AGE', 'key_flag': True, 'type_chain': ['int', 'ui_8'],
+                  'format': None, 'encode': None, 'default': 0}
+    _seq_field = {'field_name': '_SEQ', 'key_flag': True, 'type_chain': ['char', 'c_20'],
+                  'format': None, 'encode': None, 'default': '0'*20}
+    _no_field = {'field_name': '_NO', 'key_flag': True, 'type_chain': ['int', 'ui_8'],
+                 'format': None, 'encode': None, 'default': 0}
+    _op_field = {'field_name': '_OP', 'key_flag': False, 'type_chain': ['char', 'c_1'],
+                 'format': None, 'encode': None, 'default': ''}
+
     def __init__(self, **kwargs):
         """Adaptor for loading databases
 
@@ -105,6 +115,22 @@ class Adaptor(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError  # pragma: no cover
 
+    def extend_column(self, table_id: str, column_table: str, old_type: str, new_type: str ):
+        """Public Function
+
+        Changing size of an existed column. (if supported by database)
+
+        Args:
+            table_id (:obj:`str`): Table ID
+            column_name (:obj:`str`): Column name
+            old_type (:obj:`str`): Old Data Type
+            new_type (:obj:`str`): New Data Type
+
+        Notes:
+            If the database support dynamic column size, just implement the methode with pass keyword
+        """
+        raise NotImplementedError  # pragma: no cover
+
 class DbapiAdaptor(Adaptor):
     """Adaptor for databases supporting PEP249
 
@@ -118,6 +144,7 @@ class DbapiAdaptor(Adaptor):
     """
 
     type_dict = {}
+
     # Variable Name: @table_name@, @field_types@, @key_list@
     create_sql_template = "CREATE TABLE {} ( {}, PRIMARY KEY( {} ))"
     # Variable Name: @table_name@
@@ -128,16 +155,22 @@ class DbapiAdaptor(Adaptor):
     delete_sql_template = "DELETE FROM {} WHERE {}"
     # Variable Name: @old_table_name@, @new_table_name@
     rename_sql_template = "ALTER TABLE {} RENAME TO {}"
-    obs_insert_sql = ("(IFNULL(r._SEQ, '') || IFNULL(r._AGE, '') || IFNULL(r._SEQ, '')) > "
-                      "(IFNULL(t._SEQ, '') || IFNULL(t._AGE, '') || IFNULL(t._SEQ, '')) "
+    obs_insert_sql = ("(IFNULL(r._SEQ, '00000000000000000000') || "
+                      "SUBSTR('0000000000' || IFNULL(r._AGE, ''), -10, 10) || "
+                      "SUBSTR('0000000000' || IFNULL(r._NO, ''), -10, 10)) > "
+                      "(IFNULL(t._SEQ, '00000000000000000000') || "
+                      "SUBSTR('0000000000' || IFNULL(t._AGE, ''), -10, 10) || "
+                      "SUBSTR('0000000000' || IFNULL(t._NO, ''), -10, 10)) "
                       "AND r._OP in ('U', 'D')")
     # Variable Name: @ori_table_name@, @raw_table_name@, @key_eq_key@
     load_del_sql_template = ("DELETE FROM {} WHERE EXISTS ( "
                              "SELECT * FROM {} WHERE {} AND _OP in ( 'U', 'D' ) )")
-    # Variable Name: @ori_table_name@, @field_list@, @raw_table_name@, @raw_table_name@, @obs_insert_sql@
+    # Variable Name: @ori_table_name@,
+    # @field_list@, @raw_table_name@,
+    # @raw_table_name@, @obs_insert_sql@, @key_eq_key@
     load_ins_sql_template = ("INSERT INTO {} "
                              "SELECT {} FROM {} t WHERE NOT EXISTS ( "
-                             "SELECT * FROM {} r WHERE {} )")
+                             "SELECT * FROM {} r WHERE {} AND {} ) AND t._OP != 'D'")
 
 
     def __init__(self, connection, **kwargs):
@@ -160,14 +193,10 @@ class DbapiAdaptor(Adaptor):
     def create_table(self, table_id: str, meta_data: dict, field_data: List[dict], raw_flag: bool = False):
         field_list = field_data.copy()
         if raw_flag:
-            field_list.append({'field_name': '_AGE', 'key_flag': False, 'type_chain': ['int', 'ui_8'],
-                              'format': None, 'encode': None})
-            field_list.append({'field_name': '_SEQ', 'key_flag': False, 'type_chain': ['char', 'c_8'],
-                              'format': None, 'encode': None})
-            field_list.append({'field_name': '_NO', 'key_flag': False, 'type_chain': ['int', 'ui_8'],
-                              'format': None, 'encode': None})
-            field_list.append({'field_name': '_OP', 'key_flag': False, 'type_chain': ['char', 'c_1'],
-                              'format': None, 'encode': None})
+            field_list.append(self._age_field)
+            field_list.append(self._seq_field)
+            field_list.append(self._no_field)
+            field_list.append(self._op_field)
         cur = self.connection.cursor()
         sql = self._get_create_sql(table_id, meta_data, field_list)
         cur.execute(sql)
@@ -180,10 +209,10 @@ class DbapiAdaptor(Adaptor):
 
     def insert_raw_data(self, table_id: str, field_data: List[dict], data: List[dict], **kwargs):
         raw_field = field_data.copy()
-        raw_field.append({'field_name': '_AGE'})
-        raw_field.append({'field_name': '_SEQ'})
-        raw_field.append({'field_name': '_NO'})
-        raw_field.append({'field_name': '_OP'})
+        raw_field.append(self._age_field)
+        raw_field.append(self._seq_field)
+        raw_field.append(self._no_field)
+        raw_field.append(self._op_field)
         cur = self.connection.cursor()
         sql = self._get_insert_sql(table_id, raw_field)
         values = self._get_value_tuples(data, raw_field)
@@ -202,7 +231,8 @@ class DbapiAdaptor(Adaptor):
         del_data = [item for item in data if item.get('_OP', '') in ['U', 'D']]
         # Everything is equal to : Delete + Insert: Delete at first
         del_vals = self._get_value_tuples(data, key_list) if replay_safe else self._get_value_tuples(del_data, key_list)
-        cur.executemany(del_sql, del_vals)
+        if len(del_vals) > 0:
+            cur.executemany(del_sql, del_vals)
         # Insert Mode : Case simple : Append mode
         if len(del_data) == 0:
             ins_values = self._get_value_tuples(data, field_data)
@@ -236,7 +266,7 @@ class DbapiAdaptor(Adaptor):
 
     def _get_table_name(self, table_id: str) -> str:
         sysid, db_name, schema, table_name = table_id.split('.')
-        table_name = schema + '.' + table_name if schema else table_name
+        table_name = '"' + schema + '"."' + table_name + '"' if schema else '"' + table_name + '"'
         return table_name
 
     @abc.abstractmethod
@@ -305,7 +335,10 @@ class DbapiAdaptor(Adaptor):
                                                  self._sql_safe(self._get_field_list(field_data)),
                                                  self._sql_safe(raw_table_name),
                                                  self._sql_safe(raw_table_name),
-                                                 self._sql_safe(self.obs_insert_sql))
+                                                 self._sql_safe(self.obs_insert_sql),
+                                                 self._sql_safe(self._get_key_eq_key(field_data,
+                                                                                     't',
+                                                                                     'r')))
 
 class DbapiQmarkAdaptor(DbapiAdaptor):
     """Adaptor for databases supporting PEP 249 with paramstyple qmark
@@ -328,7 +361,8 @@ class DbapiQmarkAdaptor(DbapiAdaptor):
     def _get_value_tuples(self, data_list: List[dict], field_data: List[dict]):
         value_tuples = list()
         for line in data_list:
-            value_tuples.append(tuple([line.get(field['field_name'], None) for field in field_data]))
+            value_tuples.append(tuple([line.get(field['field_name'], field.get('default', None))
+                                       for field in field_data]))
         return value_tuples
 
     def _get_insert_sql(self, table_id: str, field_data: List[dict]):

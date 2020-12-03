@@ -40,5 +40,5 @@ def test_ddic_header(translator):
     assert ddic_translated[0].get('type_chain') == ['char', 'c_4']
     assert ddic_translated[1].get('type_chain') == ['char', 'c_4', 'n_4']
     assert ddic_translated[2].get('type_chain') == ['real', 'd_15_4']
-    assert ddic_translated[3].get('type_chain') == ['char', 'c_8', 'date']
-    assert ddic_translated[4].get('type_chain') == ['char', 'c_6', 'time']
+    assert ddic_translated[3].get('type_chain') == ['char', 'c_10', 'date']
+    assert ddic_translated[4].get('type_chain') == ['char', 'c_8', 'time']

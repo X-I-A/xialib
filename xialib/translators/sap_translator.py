@@ -9,8 +9,8 @@ class SapTranslator(Translator):
     ddic_dict = {
         'C': ['c_@leng@', None, None, ''],
         'N': ['n_@leng@', None, None, '0*@leng@'],
-        'D': ['date', 'YYYYMMDD', None, '00000000'],
-        'T': ['time', 'HHMMSS', None, '000000'],
+        'D': ['date', 'YYYY-MM-DD', None, None],
+        'T': ['time', 'HH24:MI:SS', None, None],
         'X': ['blob', None, 'b16', ''],
         'I': ['i_@leng@', None, None, 0],
         'b': ['i_@leng@', None, None, None],

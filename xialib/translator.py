@@ -52,7 +52,7 @@ class Translator(metaclass=abc.ABCMeta):
         if '@p2@' in type_item:
             type_item = type_item.replace('@p2@', type_syntax[1])
         if '@format_len@' in type_item:
-            type_item = type_item.replace('@format_len@', str(len(type_format)))
+            type_item = type_item.replace('@format_len@', str(len(type_format.replace('HH24', 'HH'))))
         return type_item
 
     @classmethod
