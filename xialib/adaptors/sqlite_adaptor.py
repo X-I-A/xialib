@@ -34,3 +34,6 @@ class SQLiteAdaptor(DbapiQmarkAdaptor):
             field_line = ' '.join(field_line_list)
             field_types.append(field_line)
         return ",\n ".join(field_types)
+
+    def extend_column(self, table_id: str, column_table: str, old_type: str, new_type: str ):
+        pass
