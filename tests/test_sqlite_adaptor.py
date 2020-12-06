@@ -10,6 +10,7 @@ with open(os.path.join('.', 'input', 'person_simple', 'schema.json'), encoding='
 table_id = "...simple_person"
 new_table_id = "...simple_person_2"
 sql_count = "SELECT COUNT(*) FROM simple_person"
+sql_ctrl_select = "SELECT * FROM X_I_A_C_T_R_L"
 sql_raw_count = "SELECT COUNT(*) FROM simple_person WHERE _AGE > 500"
 sql_upd_count = "SELECT COUNT(*) FROM simple_person WHERE city = 'Paris'"
 
@@ -17,6 +18,7 @@ sql_upd_count = "SELECT COUNT(*) FROM simple_person WHERE city = 'Paris'"
 def adaptor():
     conn = sqlite3.connect(':memory:')
     adaptor = SQLiteAdaptor(connection=conn)
+    adaptor.create_table(SQLiteAdaptor._ctrl_table_id, dict(), SQLiteAdaptor._ctrl_table)
     yield adaptor
 
 def test_simple_operation(adaptor):
@@ -39,7 +41,10 @@ def test_simple_operation(adaptor):
     adaptor.upsert_data(table_id, field_data, update_list)
     c.execute(sql_upd_count)
     assert c.fetchone() == (1,)
-    adaptor.extend_column(table_id, 'dummy', 'dummy', 'dummy')
+    assert adaptor.alter_column(table_id, dict())
+    adaptor.set_ctrl_info(table_id, start_seq='20200101000000000000')
+    line = adaptor.get_ctrl_info(table_id)
+    assert line['START_SEQ'] == '20200101000000000000'
     adaptor.drop_table(table_id)
     with pytest.raises(sqlite3.OperationalError):
         c.execute(sql_count)
@@ -51,9 +56,9 @@ def test_raw_operation(adaptor):
     for item in data_02:
         item['_AGE'] = item['id']
         data_03.append(item)
+    c = adaptor.connection.cursor()
     adaptor.create_table(table_id, {}, field_data, True)
     adaptor.insert_raw_data(table_id, field_data, data_03)
-    c = adaptor.connection.cursor()
     c.execute(sql_raw_count)
     assert c.fetchone() == (500,)
     adaptor.drop_table(table_id)

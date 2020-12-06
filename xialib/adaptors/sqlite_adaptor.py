@@ -35,5 +35,5 @@ class SQLiteAdaptor(DbapiQmarkAdaptor):
             field_types.append(field_line)
         return ",\n ".join(field_types)
 
-    def extend_column(self, table_id: str, column_table: str, old_type: str, new_type: str ):
-        pass
+    def alter_column(self, table_id: str, field_line: dict) -> bool:
+        return True
