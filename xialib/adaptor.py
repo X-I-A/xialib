@@ -25,11 +25,14 @@ class Adaptor(metaclass=abc.ABCMeta):
     # Ctrl Table definition
     _ctrl_table_id = '...X_I_A_C_T_R_L'
     _ctrl_table = [
-        {'field_name': 'TABLE_ID', 'key_flag': True, 'type_chain': ['char', 'c_255']},
+        {'field_name': 'SOURCE_ID', 'key_flag': True, 'type_chain': ['char', 'c_255']},
         {'field_name': 'START_SEQ', 'key_flag': False, 'type_chain': ['char', 'c_20']},
+        {'field_name': 'TABLE_ID', 'key_flag': False, 'type_chain': ['char', 'c_255']},
+        {'field_name': 'LOG_TABLE_ID', 'key_flag': False, 'type_chain': ['char', 'c_255']},
         {'field_name': 'LOADED_KEY', 'key_flag': False, 'type_chain': ['char', 'c_20']},
         {'field_name': 'SAFE_END_FLAG', 'key_flag': False, 'type_chain': ['int', 'bool']},
         {'field_name': 'META_DATA', 'key_flag': False, 'type_chain': ['char', 'c_5000']},
+        {'field_name': 'AGE_LIST', 'key_flag': False, 'type_chain': ['char', 'c_1000000']},
         {'field_name': 'FIELD_LIST', 'key_flag': False, 'type_chain': ['char', 'c_1000000']},
     ]
 
@@ -64,13 +67,13 @@ class Adaptor(metaclass=abc.ABCMeta):
         return field_data
 
     @abc.abstractmethod
-    def get_ctrl_info(self, table_id) -> dict:
+    def get_ctrl_info(self, source_id) -> dict:
         """ To be implemented Public function
 
         This function will get the ctrl table information
 
         Args:
-            table_id (:obj:`str`): Table ID
+            source_id (:obj:`str`): Data source ID
 
         Return:
             Ctrl line dictionary
@@ -78,7 +81,7 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def set_ctrl_info(self, table_id, **kwargs) -> bool:
+    def set_ctrl_info(self, source_id: str, **kwargs) -> bool:
         """ To be implemented Public function
 
         This function will set the ctrl table information
@@ -87,7 +90,7 @@ class Adaptor(metaclass=abc.ABCMeta):
             The update must be synchronous to the current node.
 
         Args:
-            table_id (:obj:`str`): Table ID
+            source_id (:obj:`str`): Data source ID
 
         Return:
             Ctrl line dictionary
@@ -95,13 +98,14 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def insert_raw_data(self, table_id: str, field_data: List[dict], data: List[dict], **kwargs) -> bool:
+    def insert_raw_data(self, log_table_id: str, field_data: List[dict], data: List[dict], **kwargs) -> bool:
         """ To be implemented Public function
 
-        This function will insert x-i-a spec data into the database without any modification
+        This function will insert x-i-a spec data into the database without any modification. Two main usage:
+        1. log insert. 2. Fast table load
 
         Args:
-            table_id (:obj:`str`): Table ID
+            table_id (:obj:`str`): Log Table ID
             field_data (:obj:`list` of `dict`): Table field description
             data (:obj:`list` of :obj:`dict`): Data in Python dictioany list format (spec x-i-a)
 
@@ -111,18 +115,21 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def load_raw_data(self, raw_table_id: str, tar_table_id: str, field_data: List[dict]) -> bool:
+    def load_log_data(self, source_id: str, start_age: int = None, end_age: int = None) -> bool:
         """ Public function
 
-        This function will load the data saved in raw table into target table
+        This function will load the data saved in raw table (log usage) into target table
 
         Args:
-            raw_table_id (:obj:`str`): Raw Table ID
-            tar_table_id (:obj:`str`): Raw Table ID
-            field_data (:obj:`list` of `dict`): Table field description
+            source_id (:obj:`str`): Source Table ID
+            start_age (:obj:`int`): Start Age
+            end_age (:obj:`int`): End Age
 
         Return:
             True if successful False in the other case
+
+        Notes:
+
        """
         raise NotImplementedError  # pragma: no cover
 
@@ -150,15 +157,18 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def create_table(self, table_id: str, meta_data: dict, field_data: List[dict]) -> bool:
+    def create_table(self, source_id: str, meta_data: dict, field_data: List[dict],
+                     raw_flag: bool = False, table_id: str = None) -> bool:
         """Public Function
 
         Create a table with information provided by header message with specification x-i-a
 
         Args:
+            source_id (:obj:`str`): Source Table ID with format sysid.dbid.schema.table
             table_id (:obj:`str`): Table ID with format sysid.dbid.schema.table
             meta_data (:obj:`dict`): Table related meta-data, such as Table description
             field_data (:obj:`list` of `dict`): Table field description
+            raw_flag (:obj:`bool`): If the table contains internal fields (_AGE, _SEG, _NO, _OP)
 
         Return:
             True if successful False in the other case
@@ -166,13 +176,13 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def drop_table(self, table_id: str) -> bool:
+    def drop_table(self, source_id: str) -> bool:
         """Public Function
 
         Drop table
 
         Args:
-            table_id (:obj:`str`): Table ID with format sysid.dbid.schema.table
+            source_id (:obj:`str`): Source Table ID with format sysid.dbid.schema.table
 
         Return:
             True if successful False in the other case
@@ -180,13 +190,14 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def rename_table(self, old_table_id: str, new_table_id: str):
+    def rename_table(self, source_id: str, new_table_id: str):
         """Public Function
 
         Rename table from old name into new table
 
         Args:
-            table_id (:obj:`str`): Table ID with format sysid.dbid.schema.table
+            source_id (:obj:`str`): Source Table ID with format sysid.dbid.schema.table
+            new_table_id (:obj:`str`): New Table ID with format sysid.dbid.schema.table
 
         Return:
             True if successful False in the other case
@@ -241,15 +252,17 @@ class DbapiAdaptor(Adaptor):
                       "SUBSTR('0000000000' || IFNULL(t._AGE, ''), -10, 10) || "
                       "SUBSTR('0000000000' || IFNULL(t._NO, ''), -10, 10)) "
                       "AND r._OP in ('U', 'D')")
-    # Variable Name: @ori_table_name@, @raw_table_name@, @key_eq_key@
+    # Variable Name: @ori_table_name@, @raw_table_name@, @key_eq_key@, @age_range
     load_del_sql_template = ("DELETE FROM {} WHERE EXISTS ( "
-                             "SELECT * FROM {} WHERE {} AND _OP in ( 'U', 'D' ) )")
+                             "SELECT * FROM {} WHERE {} AND {} AND _OP in ( 'U', 'D' ) )")
     # Variable Name: @ori_table_name@,
     # @field_list@, @raw_table_name@,
-    # @raw_table_name@, @obs_insert_sql@, @key_eq_key@
+    # @raw_table_name@, @obs_insert_sql@, @key_eq_key@, @age_range
     load_ins_sql_template = ("INSERT INTO {} "
                              "SELECT {} FROM {} t WHERE NOT EXISTS ( "
-                             "SELECT * FROM {} r WHERE {} AND {} ) AND t._OP != 'D'")
+                             "SELECT * FROM {} r WHERE {} AND {} ) AND {} AND t._OP != 'D'")
+    # Variable Name: @raw_table_name@, @old_age_range
+    remove_old_raw_sql_template = "DELETE FROM {} WHERE {}"
     # Variable Name: @ctrl_table_name@, @table_name@
     select_from_ctrl_template = ("SELECT * FROM {} WHERE TABLE_ID = {}")
 
@@ -265,23 +278,23 @@ class DbapiAdaptor(Adaptor):
     def _sql_safe(self, input: str) -> str:
         return input.replace(';', '')
 
-    def get_ctrl_info(self, table_id):
+    def get_ctrl_info(self, source_id):
         cur = self.connection.cursor()
         sql = self._get_ctrl_info_sql(self._ctrl_table_id)
         try:
-            cur.execute(sql, (table_id, ))
+            cur.execute(sql, (source_id, ))
         except Exception as e:  # pragma: no cover
-            self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return dict()  # pragma: no cover
-        return_line = {'TABLE_ID': table_id}
+        return_line = {'SOURCE_ID': source_id, 'TABLE_ID': source_id,}
         fetch_result = cur.fetchone()
         if fetch_result is not None:
             sql_result  = list(fetch_result)
             key_list = [item['field_name'] for item in self._ctrl_table]
             return_line = {key: value for key, value in zip(key_list, sql_result)}
-        if return_line['TABLE_ID'] != table_id:  # pragma: no cover
-            self.logger.error("Ctrl Table: {} != {}".format(return_line['TABLE_ID'],
-                                                            table_id), extra=self.log_context)  # pragma: no cover
+        if return_line['SOURCE_ID'] != source_id:  # pragma: no cover
+            self.logger.error("Ctrl Table: {} != {}".format(return_line['SOURCE_ID'],
+                                                            source_id), extra=self.log_context)  # pragma: no cover
             raise ValueError("XIA-000021")  # pragma: no cover
         if return_line.get('META_DATA', None) is not None:
             return_line['META_DATA'] = self._string_to_meta_data(return_line.get('META_DATA'))
@@ -289,8 +302,8 @@ class DbapiAdaptor(Adaptor):
             return_line['FIELD_LIST'] = self._string_to_field_data(return_line['FIELD_LIST'])
         return return_line
 
-    def set_ctrl_info(self, table_id, **kwargs):
-        old_ctrl_info = self.get_ctrl_info(table_id)
+    def set_ctrl_info(self, source_id, **kwargs) -> bool:
+        old_ctrl_info = self.get_ctrl_info(source_id)
         new_ctrl_info = old_ctrl_info.copy()
         if new_ctrl_info.get('META_DATA', None) is not None:
             new_ctrl_info['META_DATA'] = self._meta_data_to_string(new_ctrl_info['META_DATA'])
@@ -302,23 +315,27 @@ class DbapiAdaptor(Adaptor):
                 new_ctrl_info[key] = self._meta_data_to_string(kwargs[key.lower()])
             elif key == 'FIELD_LIST':
                 new_ctrl_info[key] = self._field_data_to_string(kwargs[key.lower()])
-            elif key != 'TABLE_ID':
+            elif key != 'SOURCE_ID':
                 new_ctrl_info[key] = kwargs[key.lower()]
-        self.upsert_data(self._ctrl_table_id, self._ctrl_table, [new_ctrl_info], True)
+        return self.upsert_data(self._ctrl_table_id, self._ctrl_table, [new_ctrl_info], True)
 
-    def drop_table(self, table_id: str):
+    def drop_table(self, source_id: str):
+        table_info = self.get_ctrl_info(source_id)
+        table_id = table_info['TABLE_ID']
         cur = self.connection.cursor()
         sql = self._get_drop_sql(table_id)
         try:
             cur.execute(sql)
         except Exception as e:  # pragma: no cover
-            self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
-        self.upsert_data(self._ctrl_table_id, self._ctrl_table, [{'TABLE_ID': table_id}], True)
-        return True
+        return self.upsert_data(self._ctrl_table_id, self._ctrl_table, [{'SOURCE_ID': source_id}], True)
 
-    def create_table(self, table_id: str, meta_data: dict, field_data: List[dict], raw_flag: bool = False):
+    def create_table(self, source_id: str, meta_data: dict, field_data: List[dict],
+                     raw_flag: bool = False, table_id: str = None):
         field_list = field_data.copy()
+        if table_id is None:
+            table_id = source_id
         if raw_flag:
             field_list.append(self._age_field)
             field_list.append(self._seq_field)
@@ -329,13 +346,16 @@ class DbapiAdaptor(Adaptor):
         try:
             cur.execute(sql)
         except Exception as e:  # pragma: no cover
-            self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
         if table_id != self._ctrl_table_id:
-            self.set_ctrl_info(table_id, meta_data=meta_data, field_list=field_data)
+            return self.set_ctrl_info(source_id, table_id=table_id, meta_data=meta_data, field_list=field_data)
         return True
 
-    def rename_table(self, old_table_id: str, new_table_id: str):
+    def rename_table(self, source_id: str, new_table_id: str):
+        table_info = self.get_ctrl_info(source_id)
+        table_param = {key.lower(): value for key, value in table_info.items() if key.lower() != 'source_id'}
+        old_table_id = table_param['table_id']
         sql = self.rename_sql_template.format(self._sql_safe(self._get_table_name(old_table_id)),
                                               self._sql_safe(self._get_table_name(new_table_id)))
         cur = self.connection.cursor()
@@ -344,11 +364,8 @@ class DbapiAdaptor(Adaptor):
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
             return False  # pragma: no cover
-        table_info = self.get_ctrl_info(old_table_id)
-        table_param = {key.lower(): value for key, value in table_info.items() if key.lower() != 'table_id'}
-        self.set_ctrl_info(new_table_id, **table_param)
-        self.upsert_data(self._ctrl_table_id, self._ctrl_table, [{'TABLE_ID': old_table_id}], True)
-        return True
+        table_param['TABLE_ID'] = new_table_id
+        return self.set_ctrl_info(source_id, **table_param)
 
     def insert_raw_data(self, table_id: str, field_data: List[dict], data: List[dict], **kwargs):
         raw_field = field_data.copy()
@@ -361,9 +378,10 @@ class DbapiAdaptor(Adaptor):
         values = self._get_value_tuples(data, raw_field)
         try:
             cur.executemany(sql, values)
+            self.connection.commit()
             return True
         except Exception as e:  # pragma: no cover
-            self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
 
     def upsert_data(self,
@@ -382,17 +400,19 @@ class DbapiAdaptor(Adaptor):
         if len(del_vals) > 0:
             try:
                 cur.executemany(del_sql, del_vals)
+                self.connection.commit()
             except Exception as e:  # pragma: no cover
-                self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+                self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
                 return False  # pragma: no cover
         # Insert Mode : Case simple : Append mode
         if len(del_data) == 0:
             ins_values = self._get_value_tuples(data, field_data)
             try:
                 cur.executemany(ins_sql, ins_values)
+                self.connection.commit()
                 return True
             except Exception as e:  # pragma: no cover
-                self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+                self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
                 return False  # pragma: no cover
         # Case standard: mark obsoleted inserts and than insert
         else:
@@ -406,27 +426,39 @@ class DbapiAdaptor(Adaptor):
             ins_values = self._get_value_tuples([item for item in data if item.get('_OP', '') != 'D'], field_data)
             try:
                 cur.executemany(ins_sql, ins_values)
+                self.connection.commit()
                 return True
             except Exception as e:  # pragma: no cover
-                self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+                self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
                 return False  # pragma: no cover
 
-    def load_raw_data(self, raw_table_id: str, tar_table_id: str, field_data: List[dict]):
+    def load_log_data(self, source_id: str, start_age: int = None, end_age: int = None):
+        table_info = self.get_ctrl_info(source_id)
+        raw_table_id = table_info['LOG_TABLE_ID']
+        tar_table_id = table_info['TABLE_ID']
+        field_data = table_info['FIELD_LIST']
+
         cur = self.connection.cursor()
-        load_del_sql = self._get_load_del_sql(raw_table_id, tar_table_id, field_data)
+        load_del_sql = self._get_load_del_sql(raw_table_id, tar_table_id, field_data, start_age, end_age)
         try:
             cur.execute(load_del_sql)
         except Exception as e:  # pragma: no cover
-            self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
-        load_ins_sql = self._get_load_ins_sql(raw_table_id, tar_table_id, field_data)
+        load_ins_sql = self._get_load_ins_sql(raw_table_id, tar_table_id, field_data, start_age, end_age)
         try:
             cur.execute(load_ins_sql)
+        except Exception as e:  # pragma: no cover
+            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
+            return False  # pragma: no cover
+        remove_old_raw_sql = self._get_remove_old_raw_sql(raw_table_id, start_age, end_age)
+        try:
+            cur.execute(remove_old_raw_sql)
+            self.connection.commit()
             return True
         except Exception as e:  # pragma: no cover
-            self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
+            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
-
 
     def _get_key_list(self, field_data: List[dict]) -> str:
         key_list = ", ".join(['"' + field['field_name'] + '"' for field in field_data if field['key_flag']])
@@ -492,19 +524,36 @@ class DbapiAdaptor(Adaptor):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def _get_ctrl_info_sql(self, table_id: str):
+    def _get_ctrl_info_sql(self, source_id: str):
         raise NotImplementedError  # pragma: no cover
 
-    def _get_load_del_sql(self, raw_table_id: str, tar_table_id: str, field_data: List[dict]):
+    def _get_age_range_condition(self, start_age: int = None, end_age: int = None) -> str:
+        if start_age is None and end_age is None:
+            return "1 = 1"
+        elif end_age is None:
+            return "_AGE >= {}".format(start_age)
+        elif start_age is None:
+            return "_AGE <= {}".format(end_age)
+        else:
+            return "_AGE >= {} AND _AGE <= {}".format(start_age, end_age)
+
+    def _get_old_age_condition(self, end_age: int = None) -> str:
+        return "1 > 1" if end_age is None else "_AGE <= {}".format(end_age)
+
+    def _get_load_del_sql(self, raw_table_id: str, tar_table_id: str, field_data: List[dict],
+                          start_age: int = None, end_age: int = None):
         raw_table_name = self._get_table_name(raw_table_id)
         tar_table_name = self._get_table_name(tar_table_id)
         return self.load_del_sql_template.format(self._sql_safe(tar_table_name),
                                                  self._sql_safe(raw_table_name),
                                                  self._sql_safe(self._get_key_eq_key(field_data,
                                                                                      tar_table_name,
-                                                                                     raw_table_name)))
+                                                                                     raw_table_name)),
+                                                 self._sql_safe(self._get_age_range_condition(start_age,
+                                                                                              end_age)))
 
-    def _get_load_ins_sql(self, raw_table_id: str, tar_table_id: str, field_data: List[dict]):
+    def _get_load_ins_sql(self, raw_table_id: str, tar_table_id: str, field_data: List[dict],
+                          start_age: int = None, end_age: int = None):
         raw_table_name = self._get_table_name(raw_table_id)
         tar_table_name = self._get_table_name(tar_table_id)
         return self.load_ins_sql_template.format(self._sql_safe(tar_table_name),
@@ -514,7 +563,14 @@ class DbapiAdaptor(Adaptor):
                                                  self._sql_safe(self.obs_insert_sql),
                                                  self._sql_safe(self._get_key_eq_key(field_data,
                                                                                      't',
-                                                                                     'r')))
+                                                                                     'r')),
+                                                 self._sql_safe(self._get_age_range_condition(start_age,
+                                                                                              end_age)))
+
+    def _get_remove_old_raw_sql(self, raw_table_id: str, start_age: int = None, end_age: int = None):
+        raw_table_name = self._get_table_name(raw_table_id)
+        return self.remove_old_raw_sql_template.format(self._sql_safe(raw_table_name),
+                                                       self._sql_safe(self._get_old_age_condition(end_age)))
 
 class DbapiQmarkAdaptor(DbapiAdaptor):
     """Adaptor for databases supporting PEP 249 with paramstyple qmark
@@ -549,6 +605,6 @@ class DbapiQmarkAdaptor(DbapiAdaptor):
         return self.delete_sql_template.format(self._sql_safe(self._get_table_name(table_id)),
                                                self._sql_safe(self._get_where_key_holders(key_field_data)))
 
-    def _get_ctrl_info_sql(self, table_id: str):
+    def _get_ctrl_info_sql(self, source_id: str):
         return self.select_from_ctrl_template.format(self._sql_safe(self._get_table_name(self._ctrl_table_id)),
                                                      '?')
