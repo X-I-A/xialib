@@ -285,7 +285,7 @@ class DbapiAdaptor(Adaptor):
     # Variable Name: @raw_table_name@, @old_age_range
     remove_old_raw_sql_template = "DELETE FROM {} WHERE {}"
     # Variable Name: @ctrl_table_name@, @table_name@
-    select_from_ctrl_template = ("SELECT * FROM {} WHERE TABLE_ID = {}")
+    select_from_ctrl_template = ("SELECT * FROM {} WHERE SOURCE_ID = {}")
 
     def __init__(self, connection, **kwargs):
         super().__init__(**kwargs)

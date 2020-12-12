@@ -12,7 +12,7 @@ log_table_id = "...XIA_simple_person"
 new_table_id = "...simple_person_2"
 sql_count = "SELECT COUNT(*) FROM simple_person"
 sql_ctrl_select = "SELECT * FROM X_I_A_C_T_R_L"
-sql_raw_count = "SELECT COUNT(*) FROM simple_person WHERE _AGE > 500"
+sql_raw_count = "SELECT COUNT(*) FROM XIA_simple_person WHERE _AGE > 500"
 sql_upd_count = "SELECT COUNT(*) FROM simple_person WHERE city = 'Paris'"
 
 @pytest.fixture(scope='module')
@@ -58,8 +58,8 @@ def test_raw_operation(adaptor):
         item['_AGE'] = item['id']
         data_03.append(item)
     c = adaptor.connection.cursor()
-    assert adaptor.create_table(table_id, '20200101000000000000', {}, field_data, True)
-    assert adaptor.insert_raw_data(table_id, field_data, data_03)
+    assert adaptor.create_table(table_id, '20200101000000000000', {}, field_data)
+    assert adaptor.insert_raw_data(log_table_id, field_data, data_03)
     c.execute(sql_raw_count)
     assert c.fetchone() == (500,)
     assert adaptor.drop_table(table_id)
