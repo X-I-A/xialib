@@ -99,9 +99,8 @@ class Adaptor(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError  # pragma: no cover
 
-    @abc.abstractmethod
     def get_log_table_id(self, source_id: str) -> str:
-        """ To be implemented Public function
+        """ Public function
 
         This function will return the log table id of a given source_id. Should be unique and doesn't exist yet
 
@@ -111,7 +110,8 @@ class Adaptor(metaclass=abc.ABCMeta):
         Return:
             log table id
         """
-        raise NotImplementedError  # pragma: no cover
+        sysid, db, schema, table = source_id.split('.')
+        return '.'.join([sysid, db, schema, "XIA_" + table])
 
     @abc.abstractmethod
     def insert_raw_data(self, log_table_id: str, field_data: List[dict], data: List[dict], **kwargs) -> bool:
@@ -490,10 +490,6 @@ class DbapiAdaptor(Adaptor):
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
-
-    def get_log_table_id(self, source_id: str):
-        sysid, db, schema, table = source_id.split('.')
-        return '.'.join([sysid, db, schema, "XIA_" + table])
 
     def _get_key_list(self, field_data: List[dict]) -> str:
         key_list = ", ".join(['"' + field['field_name'] + '"' for field in field_data if field['key_flag']])
