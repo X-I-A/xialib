@@ -11,6 +11,8 @@ __all__ = ['Adaptor']
 
 
 class Adaptor(metaclass=abc.ABCMeta):
+    # Constant Definition
+    FLEXIBLE_FIELDS = [{}]
 
     # Standard field definition
     _age_field = {'field_name': '_AGE', 'key_flag': True, 'type_chain': ['int', 'ui_8'],
@@ -98,6 +100,20 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
+    def get_log_table_id(self, source_id: str) -> str:
+        """ To be implemented Public function
+
+        This function will return the log table id of a given source_id. Should be unique and doesn't exist yet
+
+        Args:
+            source_id (:obj:`str`): Data source ID
+
+        Return:
+            log table id
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
     def insert_raw_data(self, log_table_id: str, field_data: List[dict], data: List[dict], **kwargs) -> bool:
         """ To be implemented Public function
 
@@ -111,6 +127,9 @@ class Adaptor(metaclass=abc.ABCMeta):
 
         Return:
             True if successful False in the other case
+
+        Warning:
+            Same entry might be sent more than once, implementation must take this point into account
         """
         raise NotImplementedError  # pragma: no cover
 
@@ -157,7 +176,7 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def create_table(self, source_id: str, meta_data: dict, field_data: List[dict],
+    def create_table(self, source_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
                      raw_flag: bool = False, table_id: str = None) -> bool:
         """Public Function
 
@@ -165,6 +184,7 @@ class Adaptor(metaclass=abc.ABCMeta):
 
         Args:
             source_id (:obj:`str`): Source Table ID with format sysid.dbid.schema.table
+            start_seq (:obj:`str`): Start sequence ID
             table_id (:obj:`str`): Table ID with format sysid.dbid.schema.table
             meta_data (:obj:`dict`): Table related meta-data, such as Table description
             field_data (:obj:`list` of `dict`): Table field description
@@ -204,6 +224,7 @@ class Adaptor(metaclass=abc.ABCMeta):
        """
         raise NotImplementedError  # pragma: no cover
 
+    @abc.abstractmethod
     def alter_column(self, table_id: str, field_line: dict ) -> bool:
         """Public Function
 
@@ -322,35 +343,45 @@ class DbapiAdaptor(Adaptor):
     def drop_table(self, source_id: str):
         table_info = self.get_ctrl_info(source_id)
         table_id = table_info['TABLE_ID']
+        log_table_id = table_info.get('LOG_TABLE_ID', '')
         cur = self.connection.cursor()
         sql = self._get_drop_sql(table_id)
         try:
+            if log_table_id:
+                log_drop_sql = self._get_drop_sql(log_table_id)
+                cur.execute(log_drop_sql)
             cur.execute(sql)
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
         return self.upsert_data(self._ctrl_table_id, self._ctrl_table, [{'SOURCE_ID': source_id}], True)
 
-    def create_table(self, source_id: str, meta_data: dict, field_data: List[dict],
+    def create_table(self, source_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
                      raw_flag: bool = False, table_id: str = None):
         field_list = field_data.copy()
         if table_id is None:
             table_id = source_id
-        if raw_flag:
-            field_list.append(self._age_field)
-            field_list.append(self._seq_field)
-            field_list.append(self._no_field)
-            field_list.append(self._op_field)
         cur = self.connection.cursor()
-        sql = self._get_create_sql(table_id, meta_data, field_list)
+        sql = self._get_create_sql(table_id, meta_data, field_list, raw_flag)
         try:
             cur.execute(sql)
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
-        if table_id != self._ctrl_table_id:
-            return self.set_ctrl_info(source_id, table_id=table_id, meta_data=meta_data, field_list=field_data)
-        return True
+
+        if raw_flag or table_id == self._ctrl_table_id:
+            return True
+
+        log_table_id = self.get_log_table_id(source_id)
+        # If no need to create log table, the adaptor can return a None object
+        if log_table_id is None:
+            return True  # pragma: no cover
+        if not self.create_table(source_id, start_seq, meta_data, field_data, True, log_table_id):
+            self.logger.error("Log table creation Error: {}".format(log_table_id),
+                              extra=self.log_context)  # pragma: no cover
+            return False  # pragma: no cover
+        return self.set_ctrl_info(source_id, table_id=table_id, meta_data=meta_data, field_list=field_data,
+                                  start_seq=start_seq, log_table_id=log_table_id)
 
     def rename_table(self, source_id: str, new_table_id: str):
         table_info = self.get_ctrl_info(source_id)
@@ -460,6 +491,10 @@ class DbapiAdaptor(Adaptor):
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
 
+    def get_log_table_id(self, source_id: str):
+        sysid, db, schema, table = source_id.split('.')
+        return '.'.join([sysid, db, schema, "XIA_" + table])
+
     def _get_key_list(self, field_data: List[dict]) -> str:
         key_list = ", ".join(['"' + field['field_name'] + '"' for field in field_data if field['key_flag']])
         return key_list
@@ -507,10 +542,16 @@ class DbapiAdaptor(Adaptor):
     def _get_value_tuples(self, data_list: List[dict], field_data: List[dict]):
         raise NotImplementedError  # pragma: no cover
 
-    def _get_create_sql(self, table_id: str, meta_data: dict, field_data: List[dict]):
+    def _get_create_sql(self, table_id: str, meta_data: dict, field_data: List[dict], raw_flag: bool):
+        field_list =field_data.copy()
+        if raw_flag:
+            field_list.append(self._age_field)
+            field_list.append(self._seq_field)
+            field_list.append(self._no_field)
+            field_list.append(self._op_field)
         return self.create_sql_template.format(self._sql_safe(self._get_table_name(table_id)),
-                                               self._sql_safe(self._get_field_types(field_data)),
-                                               self._sql_safe(self._get_key_list(field_data)))
+                                               self._sql_safe(self._get_field_types(field_list)),
+                                               self._sql_safe(self._get_key_list(field_list)))
 
     def _get_drop_sql(self, table_id: str):
         return self.drop_sql_template.format(self._sql_safe(self._get_table_name(table_id)))
