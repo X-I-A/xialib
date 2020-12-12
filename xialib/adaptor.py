@@ -307,7 +307,7 @@ class DbapiAdaptor(Adaptor):
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return dict()  # pragma: no cover
-        return_line = {'SOURCE_ID': source_id, 'TABLE_ID': source_id,}
+        return_line = {'SOURCE_ID': source_id}
         fetch_result = cur.fetchone()
         if fetch_result is not None:
             sql_result  = list(fetch_result)
@@ -395,7 +395,7 @@ class DbapiAdaptor(Adaptor):
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
             return False  # pragma: no cover
-        table_param['TABLE_ID'] = new_table_id
+        table_param['table_id'] = new_table_id
         return self.set_ctrl_info(source_id, **table_param)
 
     def insert_raw_data(self, table_id: str, field_data: List[dict], data: List[dict], **kwargs):

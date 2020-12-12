@@ -35,7 +35,7 @@ def test_simple_operation(adaptor):
     assert adaptor.rename_table(table_id, new_table_id)
     with pytest.raises(sqlite3.OperationalError):
         c.execute(sql_count)
-    assert adaptor.rename_table(new_table_id, table_id)
+    assert adaptor.rename_table(table_id, table_id)
     assert adaptor.upsert_data(table_id, field_data, delete_list)
     c.execute(sql_count)
     assert c.fetchone() == (999,)
