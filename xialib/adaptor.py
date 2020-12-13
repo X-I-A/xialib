@@ -11,6 +11,8 @@ __all__ = ['Adaptor']
 
 
 class Adaptor(metaclass=abc.ABCMeta):
+    # Constant Definition
+    FLEXIBLE_FIELDS = [{}]
 
     # Standard field definition
     _age_field = {'field_name': '_AGE', 'key_flag': True, 'type_chain': ['int', 'ui_8'],
@@ -29,11 +31,17 @@ class Adaptor(metaclass=abc.ABCMeta):
         {'field_name': 'START_SEQ', 'key_flag': False, 'type_chain': ['char', 'c_20']},
         {'field_name': 'TABLE_ID', 'key_flag': False, 'type_chain': ['char', 'c_255']},
         {'field_name': 'LOG_TABLE_ID', 'key_flag': False, 'type_chain': ['char', 'c_255']},
-        {'field_name': 'LOADED_KEY', 'key_flag': False, 'type_chain': ['char', 'c_20']},
-        {'field_name': 'SAFE_END_FLAG', 'key_flag': False, 'type_chain': ['int', 'bool']},
         {'field_name': 'META_DATA', 'key_flag': False, 'type_chain': ['char', 'c_5000']},
-        {'field_name': 'AGE_LIST', 'key_flag': False, 'type_chain': ['char', 'c_1000000']},
         {'field_name': 'FIELD_LIST', 'key_flag': False, 'type_chain': ['char', 'c_1000000']},
+    ]
+
+    # Log Table defintion
+    _ctrl_log_id = '...X_I_A_L_O_G'
+    _ctrl_log_table = [
+        {'field_name': 'SOURCE_ID', 'key_flag': True, 'type_chain': ['char', 'c_255']},
+        {'field_name': 'START_AGE', 'key_flag': True, 'type_chain': ['char', 'c_20']},
+        {'field_name': 'END_AGE', 'key_flag': True, 'type_chain': ['char', 'c_255']},
+        {'field_name': 'LOADED_FLAG', 'key_flag': False, 'type_chain': ['char', 'c_1']},
     ]
 
     def __init__(self, **kwargs):
@@ -97,6 +105,20 @@ class Adaptor(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError  # pragma: no cover
 
+    def get_log_table_id(self, source_id: str) -> str:
+        """ Public function
+
+        This function will return the log table id of a given source_id. Should be unique and doesn't exist yet
+
+        Args:
+            source_id (:obj:`str`): Data source ID
+
+        Return:
+            log table id
+        """
+        sysid, db, schema, table = source_id.split('.')
+        return '.'.join([sysid, db, schema, "XIA_" + table])
+
     @abc.abstractmethod
     def insert_raw_data(self, log_table_id: str, field_data: List[dict], data: List[dict], **kwargs) -> bool:
         """ To be implemented Public function
@@ -111,6 +133,9 @@ class Adaptor(metaclass=abc.ABCMeta):
 
         Return:
             True if successful False in the other case
+
+        Warning:
+            Same entry might be sent more than once, implementation must take this point into account
         """
         raise NotImplementedError  # pragma: no cover
 
@@ -138,7 +163,6 @@ class Adaptor(metaclass=abc.ABCMeta):
                     table_id: str,
                     field_data: List[dict],
                     data: List[dict],
-                    replay_safe: bool = False,
                     **kwargs) -> bool:
         """ Public function
 
@@ -148,16 +172,18 @@ class Adaptor(metaclass=abc.ABCMeta):
             table_id (:obj:`str`): Table ID
             field_data (:obj:`list` of `dict`): Table field description
             data (:obj:`list` of :obj:`dict`): Data in Python dictioany list format (spec x-i-a)
-            replay_safe (:obj:`bool`): Try to delete everything before
-
 
         Return:
             True if successful False in the other case
+
+        Warning:
+            By the name of the definition,
+            upsert data is replay safe which means one data could be imported more than once.
         """
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def create_table(self, source_id: str, meta_data: dict, field_data: List[dict],
+    def create_table(self, source_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
                      raw_flag: bool = False, table_id: str = None) -> bool:
         """Public Function
 
@@ -165,6 +191,7 @@ class Adaptor(metaclass=abc.ABCMeta):
 
         Args:
             source_id (:obj:`str`): Source Table ID with format sysid.dbid.schema.table
+            start_seq (:obj:`str`): Start sequence ID
             table_id (:obj:`str`): Table ID with format sysid.dbid.schema.table
             meta_data (:obj:`dict`): Table related meta-data, such as Table description
             field_data (:obj:`list` of `dict`): Table field description
@@ -204,6 +231,7 @@ class Adaptor(metaclass=abc.ABCMeta):
        """
         raise NotImplementedError  # pragma: no cover
 
+    @abc.abstractmethod
     def alter_column(self, table_id: str, field_line: dict ) -> bool:
         """Public Function
 
@@ -231,6 +259,9 @@ class DbapiAdaptor(Adaptor):
         insert_sql_template (:obj:`str`): insert table
         delete_sql_template (:obj:`str`): delete table
         connection (:obj:`Connection`): Connection object defined in PEP249
+
+    Warning:
+        The default SQL template is based on SQLite specification.
     """
 
     type_dict = {}
@@ -240,11 +271,26 @@ class DbapiAdaptor(Adaptor):
     # Variable Name: @table_name@
     drop_sql_template = "DROP TABLE {}"
     # Variable Name: @table_name@, @value_holders@
-    insert_sql_template = "INSERT INTO {} VALUES ( {} )"
+    upsert_sql_template = "INSERT OR REPLACE INTO {} VALUES ( {} )"
     # Variable Name: @table_name@, @where_key_holders@
     delete_sql_template = "DELETE FROM {} WHERE {}"
     # Variable Name: @old_table_name@, @new_table_name@
     rename_sql_template = "ALTER TABLE {} RENAME TO {}"
+
+    # Variable Name: @ctrl_table_name@, @table_name@
+    select_from_ctrl_template = ("SELECT * FROM {} WHERE SOURCE_ID = {}")
+
+
+    # ==== Below is only for aged flow scenario====
+    # Variable Name: @ori_table_name@, @raw_table_name@, @key_eq_key@, @age_range
+    load_del_sql_template = ("DELETE FROM {} WHERE EXISTS ( "
+                             "SELECT * FROM {} WHERE {} AND {} AND _OP in ( 'U', 'D' ) )")
+    # Variable Name: @ori_table_name@,
+    # @field_list@, @raw_table_name@,
+    # @raw_table_name@, @obs_insert_sql@, @key_eq_key@, @age_range
+    load_ins_sql_template = ("INSERT OR IGNORE INTO {} "
+                             "SELECT {} FROM {} t WHERE NOT EXISTS ( "
+                             "SELECT * FROM {} r WHERE {} AND {} ) AND {} AND t._OP != 'D'")
     obs_insert_sql = ("(IFNULL(r._SEQ, '00000000000000000000') || "
                       "SUBSTR('0000000000' || IFNULL(r._AGE, ''), -10, 10) || "
                       "SUBSTR('0000000000' || IFNULL(r._NO, ''), -10, 10)) > "
@@ -252,19 +298,20 @@ class DbapiAdaptor(Adaptor):
                       "SUBSTR('0000000000' || IFNULL(t._AGE, ''), -10, 10) || "
                       "SUBSTR('0000000000' || IFNULL(t._NO, ''), -10, 10)) "
                       "AND r._OP in ('U', 'D')")
-    # Variable Name: @ori_table_name@, @raw_table_name@, @key_eq_key@, @age_range
-    load_del_sql_template = ("DELETE FROM {} WHERE EXISTS ( "
-                             "SELECT * FROM {} WHERE {} AND {} AND _OP in ( 'U', 'D' ) )")
-    # Variable Name: @ori_table_name@,
-    # @field_list@, @raw_table_name@,
-    # @raw_table_name@, @obs_insert_sql@, @key_eq_key@, @age_range
-    load_ins_sql_template = ("INSERT INTO {} "
-                             "SELECT {} FROM {} t WHERE NOT EXISTS ( "
-                             "SELECT * FROM {} r WHERE {} AND {} ) AND {} AND t._OP != 'D'")
-    # Variable Name: @raw_table_name@, @old_age_range
-    remove_old_raw_sql_template = "DELETE FROM {} WHERE {}"
-    # Variable Name: @ctrl_table_name@, @table_name@
-    select_from_ctrl_template = ("SELECT * FROM {} WHERE TABLE_ID = {}")
+    # Variable Name: @log_table_name@, @table_name@
+    select_from_log_template = ("SELECT * FROM {} WHERE SOURCE_ID = {}")
+    # Variable Name: @log_table_name@, @merged@, @old_age_range, @source_id
+    update_log_table_sql_template = "UPDATE {} SET LOADED_FLAG = {} WHERE {} AND SOURCE_ID = {}"
+    # Variable Name: @log_table_name@, @source_id@
+    # @log_table_name@, @source_id@, @merged@
+    remove_old_log_sql_template = ("DELETE FROM {} WHERE SOURCE_ID = {} AND END_AGE < "
+                                   "( SELECT MAX(END_AGE) "
+                                   "FROM {} WHERE SOURCE_ID = {} AND LOADED_FLAG = {} ) ")
+    # Variable Name: @raw_table_name@,
+    # @log_table_name@, @source_id@, @merged@
+    remove_old_raw_sql_template = ("DELETE FROM {} WHERE _AGE <= "
+                                   "( SELECT MAX(END_AGE) "
+                                   "FROM {} WHERE SOURCE_ID = {} AND LOADED_FLAG = {} ) ")
 
     def __init__(self, connection, **kwargs):
         super().__init__(**kwargs)
@@ -286,7 +333,7 @@ class DbapiAdaptor(Adaptor):
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return dict()  # pragma: no cover
-        return_line = {'SOURCE_ID': source_id, 'TABLE_ID': source_id,}
+        return_line = {'SOURCE_ID': source_id}
         fetch_result = cur.fetchone()
         if fetch_result is not None:
             sql_result  = list(fetch_result)
@@ -312,45 +359,55 @@ class DbapiAdaptor(Adaptor):
         key_list = [item['field_name'] for item in self._ctrl_table if item['field_name'].lower() in kwargs]
         for key in key_list:
             if key == 'META_DATA':
-                new_ctrl_info[key] = self._meta_data_to_string(kwargs[key.lower()])
+                new_ctrl_info[key] = self._meta_data_to_string(kwargs [key.lower()])
             elif key == 'FIELD_LIST':
                 new_ctrl_info[key] = self._field_data_to_string(kwargs[key.lower()])
             elif key != 'SOURCE_ID':
                 new_ctrl_info[key] = kwargs[key.lower()]
-        return self.upsert_data(self._ctrl_table_id, self._ctrl_table, [new_ctrl_info], True)
+        return self.upsert_data(self._ctrl_table_id, self._ctrl_table, [new_ctrl_info])
 
     def drop_table(self, source_id: str):
         table_info = self.get_ctrl_info(source_id)
         table_id = table_info['TABLE_ID']
+        log_table_id = table_info.get('LOG_TABLE_ID', '')
         cur = self.connection.cursor()
         sql = self._get_drop_sql(table_id)
         try:
+            if log_table_id:
+                log_drop_sql = self._get_drop_sql(log_table_id)
+                cur.execute(log_drop_sql)
             cur.execute(sql)
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
-        return self.upsert_data(self._ctrl_table_id, self._ctrl_table, [{'SOURCE_ID': source_id}], True)
+        return self.upsert_data(self._ctrl_table_id, self._ctrl_table, [{'SOURCE_ID': source_id}])
 
-    def create_table(self, source_id: str, meta_data: dict, field_data: List[dict],
+    def create_table(self, source_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
                      raw_flag: bool = False, table_id: str = None):
         field_list = field_data.copy()
         if table_id is None:
             table_id = source_id
-        if raw_flag:
-            field_list.append(self._age_field)
-            field_list.append(self._seq_field)
-            field_list.append(self._no_field)
-            field_list.append(self._op_field)
         cur = self.connection.cursor()
-        sql = self._get_create_sql(table_id, meta_data, field_list)
+        sql = self._get_create_sql(table_id, meta_data, field_list, raw_flag)
         try:
             cur.execute(sql)
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
-        if table_id != self._ctrl_table_id:
-            return self.set_ctrl_info(source_id, table_id=table_id, meta_data=meta_data, field_list=field_data)
-        return True
+
+        if raw_flag or table_id == self._ctrl_table_id:
+            return True
+
+        log_table_id = self.get_log_table_id(source_id)
+        # If no need to create log table, the adaptor can return a None object
+        if log_table_id is None:
+            return True  # pragma: no cover
+        if not self.create_table(source_id, start_seq, meta_data, field_data, True, log_table_id):
+            self.logger.error("Log table creation Error: {}".format(log_table_id),
+                              extra=self.log_context)  # pragma: no cover
+            return False  # pragma: no cover
+        return self.set_ctrl_info(source_id, table_id=table_id, meta_data=meta_data, field_list=field_data,
+                                  start_seq=start_seq, log_table_id=log_table_id)
 
     def rename_table(self, source_id: str, new_table_id: str):
         table_info = self.get_ctrl_info(source_id)
@@ -364,7 +421,7 @@ class DbapiAdaptor(Adaptor):
         except Exception as e:  # pragma: no cover
             self.logger.error("SQL Error: {}".format(e))  # pragma: no cover
             return False  # pragma: no cover
-        table_param['TABLE_ID'] = new_table_id
+        table_param['table_id'] = new_table_id
         return self.set_ctrl_info(source_id, **table_param)
 
     def insert_raw_data(self, table_id: str, field_data: List[dict], data: List[dict], **kwargs):
@@ -374,10 +431,10 @@ class DbapiAdaptor(Adaptor):
         raw_field.append(self._no_field)
         raw_field.append(self._op_field)
         cur = self.connection.cursor()
-        sql = self._get_insert_sql(table_id, raw_field)
-        values = self._get_value_tuples(data, raw_field)
+        ins_sql = self._get_upsert_sql(table_id, raw_field)
+        ins_values = self._get_value_tuples(data, raw_field)
         try:
-            cur.executemany(sql, values)
+            cur.executemany(ins_sql, ins_values)
             self.connection.commit()
             return True
         except Exception as e:  # pragma: no cover
@@ -388,19 +445,16 @@ class DbapiAdaptor(Adaptor):
                     table_id: str,
                     field_data: List[dict],
                     data: List[dict],
-                    replay_safe: bool = False,
                     **kwargs):
         cur = self.connection.cursor()
         key_list = [item for item in field_data if item['key_flag']]
         del_sql = self._get_delete_sql(table_id, key_list)
-        ins_sql = self._get_insert_sql(table_id, field_data)
+        ins_sql = self._get_upsert_sql(table_id, field_data)
         del_data = [item for item in data if item.get('_OP', '') in ['U', 'D']]
-        # Everything is equal to : Delete + Insert: Delete at first
-        del_vals = self._get_value_tuples(data, key_list) if replay_safe else self._get_value_tuples(del_data, key_list)
+        del_vals = self._get_value_tuples(del_data, key_list)
         if len(del_vals) > 0:
             try:
                 cur.executemany(del_sql, del_vals)
-                self.connection.commit()
             except Exception as e:  # pragma: no cover
                 self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
                 return False  # pragma: no cover
@@ -432,28 +486,40 @@ class DbapiAdaptor(Adaptor):
                 self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
                 return False  # pragma: no cover
 
+    def get_log_info(self, source_id: str) -> List[dict]:
+        cur = self.connection.cursor()
+        sql = self._get_log_info_sql(self._ctrl_log_id)
+        try:
+            cur.execute(sql, (source_id,))
+        except Exception as e:  # pragma: no cover
+            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
+            return list()  # pragma: no cover
+        records = cur.fetchall()
+        return_list = list()
+        for record in records:
+            sql_result = list(record)
+            key_list = [item['field_name'] for item in self._ctrl_log_table]
+            return_line = {key: value for key, value in zip(key_list, sql_result)}
+            return_list.append(return_line)
+        return return_list
+
     def load_log_data(self, source_id: str, start_age: int = None, end_age: int = None):
         table_info = self.get_ctrl_info(source_id)
         raw_table_id = table_info['LOG_TABLE_ID']
         tar_table_id = table_info['TABLE_ID']
         field_data = table_info['FIELD_LIST']
-
         cur = self.connection.cursor()
         load_del_sql = self._get_load_del_sql(raw_table_id, tar_table_id, field_data, start_age, end_age)
+        load_ins_sql = self._get_load_ins_sql(raw_table_id, tar_table_id, field_data, start_age, end_age)
+        update_log_sql = self._get_update_log_sql(source_id, end_age)
+        remove_old_raw_sql = self._get_remove_old_raw_sql(raw_table_id, source_id)
+        remove_old_log_sql = self._get_remove_old_log_sql(source_id)
         try:
             cur.execute(load_del_sql)
-        except Exception as e:  # pragma: no cover
-            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
-            return False  # pragma: no cover
-        load_ins_sql = self._get_load_ins_sql(raw_table_id, tar_table_id, field_data, start_age, end_age)
-        try:
             cur.execute(load_ins_sql)
-        except Exception as e:  # pragma: no cover
-            self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
-            return False  # pragma: no cover
-        remove_old_raw_sql = self._get_remove_old_raw_sql(raw_table_id, start_age, end_age)
-        try:
-            cur.execute(remove_old_raw_sql)
+            cur.execute(update_log_sql, ('X', source_id))
+            cur.execute(remove_old_raw_sql, (source_id, 'X'))
+            cur.execute(remove_old_log_sql, (source_id, source_id, 'X'))
             self.connection.commit()
             return True
         except Exception as e:  # pragma: no cover
@@ -507,16 +573,22 @@ class DbapiAdaptor(Adaptor):
     def _get_value_tuples(self, data_list: List[dict], field_data: List[dict]):
         raise NotImplementedError  # pragma: no cover
 
-    def _get_create_sql(self, table_id: str, meta_data: dict, field_data: List[dict]):
+    def _get_create_sql(self, table_id: str, meta_data: dict, field_data: List[dict], raw_flag: bool):
+        field_list =field_data.copy()
+        if raw_flag:
+            field_list.append(self._age_field)
+            field_list.append(self._seq_field)
+            field_list.append(self._no_field)
+            field_list.append(self._op_field)
         return self.create_sql_template.format(self._sql_safe(self._get_table_name(table_id)),
-                                               self._sql_safe(self._get_field_types(field_data)),
-                                               self._sql_safe(self._get_key_list(field_data)))
+                                               self._sql_safe(self._get_field_types(field_list)),
+                                               self._sql_safe(self._get_key_list(field_list)))
 
     def _get_drop_sql(self, table_id: str):
         return self.drop_sql_template.format(self._sql_safe(self._get_table_name(table_id)))
 
     @abc.abstractmethod
-    def _get_insert_sql(self, table_id: str, field_data: List[dict]):
+    def _get_upsert_sql(self, table_id: str, field_data: List[dict]):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
@@ -525,6 +597,10 @@ class DbapiAdaptor(Adaptor):
 
     @abc.abstractmethod
     def _get_ctrl_info_sql(self, source_id: str):
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
+    def _get_log_info_sql(self, source_id: str):
         raise NotImplementedError  # pragma: no cover
 
     def _get_age_range_condition(self, start_age: int = None, end_age: int = None) -> str:
@@ -537,8 +613,8 @@ class DbapiAdaptor(Adaptor):
         else:
             return "_AGE >= {} AND _AGE <= {}".format(start_age, end_age)
 
-    def _get_old_age_condition(self, end_age: int = None) -> str:
-        return "1 > 1" if end_age is None else "_AGE <= {}".format(end_age)
+    def _get_log_age_condition(self, end_age: int = None) -> str:
+        return "1 > 1"  if end_age is None else "END_AGE <= {}".format(end_age)
 
     def _get_load_del_sql(self, raw_table_id: str, tar_table_id: str, field_data: List[dict],
                           start_age: int = None, end_age: int = None):
@@ -567,10 +643,17 @@ class DbapiAdaptor(Adaptor):
                                                  self._sql_safe(self._get_age_range_condition(start_age,
                                                                                               end_age)))
 
-    def _get_remove_old_raw_sql(self, raw_table_id: str, start_age: int = None, end_age: int = None):
-        raw_table_name = self._get_table_name(raw_table_id)
-        return self.remove_old_raw_sql_template.format(self._sql_safe(raw_table_name),
-                                                       self._sql_safe(self._get_old_age_condition(end_age)))
+    @abc.abstractmethod
+    def _get_update_log_sql(self, source_id: str, end_age: int = None):
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
+    def _get_remove_old_log_sql(self, source_id: str):
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
+    def _get_remove_old_raw_sql(self, raw_table_id: str, source_id: str):
+        raise NotImplementedError  # pragma: no cover
 
 class DbapiQmarkAdaptor(DbapiAdaptor):
     """Adaptor for databases supporting PEP 249 with paramstyple qmark
@@ -597,8 +680,8 @@ class DbapiQmarkAdaptor(DbapiAdaptor):
                                        for field in field_data]))
         return value_tuples
 
-    def _get_insert_sql(self, table_id: str, field_data: List[dict]):
-        return self.insert_sql_template.format(self._sql_safe(self._get_table_name(table_id)),
+    def _get_upsert_sql(self, table_id: str, field_data: List[dict]):
+        return self.upsert_sql_template.format(self._sql_safe(self._get_table_name(table_id)),
                                                self._sql_safe(self._get_value_holders(field_data)))
 
     def _get_delete_sql(self, table_id: str, key_field_data: List[dict]):
@@ -608,3 +691,30 @@ class DbapiQmarkAdaptor(DbapiAdaptor):
     def _get_ctrl_info_sql(self, source_id: str):
         return self.select_from_ctrl_template.format(self._sql_safe(self._get_table_name(self._ctrl_table_id)),
                                                      '?')
+
+    def _get_log_info_sql(self, source_id: str):
+        return self.select_from_log_template.format(self._sql_safe(self._get_table_name(self._ctrl_log_id)),
+                                                    '?')
+
+    def _get_update_log_sql(self, source_id: str, end_age: int = None):
+        log_ctrl_table_name = self._get_table_name(self._ctrl_log_id)
+        return self.update_log_table_sql_template.format(self._sql_safe(log_ctrl_table_name),
+                                                         '?',
+                                                         self._sql_safe(self._get_log_age_condition(end_age)),
+                                                         '?')
+
+    def _get_remove_old_log_sql(self, source_id: str):
+        log_ctrl_table_name = self._get_table_name(self._ctrl_log_id)
+        return self.remove_old_log_sql_template.format(self._sql_safe(log_ctrl_table_name),
+                                                       '?',
+                                                       self._sql_safe(log_ctrl_table_name),
+                                                       '?',
+                                                       '?')
+
+    def _get_remove_old_raw_sql(self, raw_table_id: str, source_id: str):
+        log_ctrl_table_name = self._get_table_name(self._ctrl_log_id)
+        raw_table_name = self._get_table_name(raw_table_id)
+        return self.remove_old_raw_sql_template.format(self._sql_safe(raw_table_name),
+                                                       self._sql_safe(log_ctrl_table_name),
+                                                       '?',
+                                                       '?')
