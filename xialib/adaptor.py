@@ -368,7 +368,10 @@ class DbapiAdaptor(Adaptor):
 
     def drop_table(self, source_id: str):
         table_info = self.get_ctrl_info(source_id)
-        table_id = table_info['TABLE_ID']
+        if source_id not in [self._ctrl_table_id, self._ctrl_log_id]:
+            table_id = table_info['TABLE_ID']
+        else:
+            table_id = source_id
         log_table_id = table_info.get('LOG_TABLE_ID', '')
         cur = self.connection.cursor()
         sql = self._get_drop_sql(table_id)
@@ -395,7 +398,7 @@ class DbapiAdaptor(Adaptor):
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
 
-        if raw_flag or table_id == self._ctrl_table_id:
+        if raw_flag or table_id in [self._ctrl_table_id, self._ctrl_log_id]:
             return True
 
         log_table_id = self.get_log_table_id(source_id)
