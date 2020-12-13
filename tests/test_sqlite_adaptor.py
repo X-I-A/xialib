@@ -22,6 +22,8 @@ def adaptor():
     adaptor.create_table(SQLiteAdaptor._ctrl_table_id, '', dict(), SQLiteAdaptor._ctrl_table)
     adaptor.create_table(SQLiteAdaptor._ctrl_log_id, '', dict(), SQLiteAdaptor._ctrl_log_table)
     yield adaptor
+    adaptor.drop_table(SQLiteAdaptor._ctrl_table_id)
+    adaptor.drop_table(SQLiteAdaptor._ctrl_log_id)
 
 def test_simple_operation(adaptor):
     with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
