@@ -20,6 +20,7 @@ def adaptor():
     conn = sqlite3.connect(':memory:')
     adaptor = SQLiteAdaptor(connection=conn)
     adaptor.create_table(SQLiteAdaptor._ctrl_table_id, '', dict(), SQLiteAdaptor._ctrl_table)
+    adaptor.create_table(SQLiteAdaptor._ctrl_log_id, '', dict(), SQLiteAdaptor._ctrl_log_table)
     yield adaptor
 
 def test_simple_operation(adaptor):
@@ -50,6 +51,13 @@ def test_simple_operation(adaptor):
     with pytest.raises(sqlite3.OperationalError):
         c.execute(sql_count)
 
+def test_log_operation(adaptor):
+    log_data = [{'SOURCE_ID': '...person_simple', 'START_AGE': 2, 'END_AGE': 3, 'LOADED_FLAG': ''},
+                {'SOURCE_ID': '...person_simple', 'START_AGE': 4, 'END_AGE': 5, 'LOADED_FLAG': ''}]
+    assert adaptor.upsert_data(adaptor._ctrl_log_id, adaptor._ctrl_log_table, log_data)
+    results = adaptor.get_log_info('...person_simple')
+    assert len(results) == 2
+
 def test_raw_operation(adaptor):
     with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
         data_02 = json.load(fp)
@@ -64,7 +72,7 @@ def test_raw_operation(adaptor):
     assert c.fetchone() == (500,)
     assert adaptor.drop_table(table_id)
 
-def test_raw_merge_operation(adaptor):
+def test_log_load_operation(adaptor):
     with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
         data_02 = json.load(fp)
     delete_list = [{"_AGE": 2, "id": 1, "first_name": "Naomi", "last_name": "Gumbrell", "_OP": 'D'}]
@@ -73,6 +81,8 @@ def test_raw_merge_operation(adaptor):
     assert adaptor.upsert_data(table_id, field_data, data_02)
     assert adaptor.insert_raw_data(log_table_id, field_data, delete_list + update_list)
     assert adaptor.load_log_data(table_id, 2, 3)
+    log_data = [{'SOURCE_ID': '...person_simple', 'START_AGE': 2, 'END_AGE': 3, 'LOADED_FLAG': ''}]
+    assert adaptor.upsert_data(adaptor._ctrl_log_id, adaptor._ctrl_log_table, log_data)
     assert adaptor.insert_raw_data(log_table_id, field_data, delete_list + update_list)
     assert adaptor.load_log_data(table_id, None, 3)
     assert adaptor.insert_raw_data(log_table_id, field_data, delete_list + update_list)
@@ -119,7 +129,7 @@ def test_combo_replay_operation(adaptor):
     delete_list = [{"_AGE": 1, "id": 1, "first_name": "Naomi", "last_name": "Gumbrell", "_OP": 'D'}]
     update_list = [{"_AGE": 2, "id": 2, "first_name": "Rodge", "last_name": "Fratczak", "city": "Paris", "_OP": 'U'}]
     assert adaptor.create_table(table_id,'20200101000000000000', {}, field_data)
-    assert adaptor.upsert_data(table_id, field_data, data_02 + delete_list + update_list, True)
+    assert adaptor.upsert_data(table_id, field_data, data_02 + delete_list + update_list)
     c = adaptor.connection.cursor()
     c.execute(sql_count)
     assert c.fetchone() == (999,)
