@@ -3,6 +3,7 @@ import json
 import logging
 from typing import List, Dict
 from functools import reduce
+from collections import Counter
 
 __all__ = ['Archiver']
 
@@ -199,6 +200,53 @@ class Archiver(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError  # pragma: no cover
 
+    @abc.abstractmethod
+    def _get_list_by_field_name(self, field_name: str) -> list:
+        raise NotImplementedError  # pragma: no cover
+
+    def describe_single_field(self, field_name: str) -> dict:
+        """Public function
+
+                This function will describe the data of a single field of the current workspace
+
+        Args:
+            field_name (:obj:`str`): field information stored in the table header
+
+        Return:
+            Field description struction
+        """
+        descriptor = {}
+        field_data = self._get_list_by_field_name(field_name)
+        if not field_data:
+            return descriptor
+        field_types = dict(Counter([type(field_item) for field_item in field_data]))
+        for key, value in field_types.items():
+            if key not in [type(None), str, int, float]:
+                return {}
+        descriptor['has_none'] = True if type(None) in field_types else False
+        field_types.pop(type(None), None)
+        field_dist = dict(Counter(field_data))
+        field_dist.pop(None, None)
+        if len(field_dist) <= 88:
+            descriptor['scope'] = 'full'
+            descriptor['type'] = 'list'
+            descriptor['value'] = list(field_dist)
+        elif len(field_types) == 1:
+            if int in field_types or float in field_types:
+                descriptor['scope'] = 'full'
+                descriptor['type'] = 'range'
+                descriptor['value'] = [min(field_dist), max(field_dist)]
+            elif str in field_types:
+                field_dist, old_field_dist = {}, {}
+                for i in range(1, 22):
+                    if len(field_dist) >= 88 and len(old_field_dist) > 0:
+                        descriptor['scope'] = 'c_' + str(i)
+                        descriptor['type'] = 'list'
+                        descriptor['value'] = list(old_field_dist)
+                        break
+                    old_field_dist = field_dist
+                    field_dist = dict(Counter([item[:i] for item in field_data if item is not None]))
+        return descriptor
 
 class ListArchiver(Archiver):
     data_encode = 'blob'
@@ -230,3 +278,7 @@ class ListArchiver(Archiver):
     def _get_data(self):
         return self.list_to_record(self.workspace[0])
 
+    def _get_list_by_field_name(self, field_name: str):
+        if len(self.workspace) > 1:
+            self._merge_workspace()
+        return self.workspace[0].get(field_name, [])
