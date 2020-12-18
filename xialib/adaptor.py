@@ -39,8 +39,8 @@ class Adaptor(metaclass=abc.ABCMeta):
     _ctrl_log_id = '...X_I_A_L_O_G'
     _ctrl_log_table = [
         {'field_name': 'SOURCE_ID', 'key_flag': True, 'type_chain': ['char', 'c_255']},
-        {'field_name': 'START_AGE', 'key_flag': True, 'type_chain': ['char', 'c_20']},
-        {'field_name': 'END_AGE', 'key_flag': True, 'type_chain': ['char', 'c_255']},
+        {'field_name': 'START_AGE', 'key_flag': True, 'type_chain': ['int', 'i_8']},
+        {'field_name': 'END_AGE', 'key_flag': True, 'type_chain': ['int', 'i_8']},
         {'field_name': 'LOADED_FLAG', 'key_flag': False, 'type_chain': ['char', 'c_1']},
     ]
 
@@ -140,6 +140,21 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
+    def get_log_info(self, source_id: str) -> List[dict]:
+        """Public function
+
+        This function will return the related table entry of log_info_table
+
+        Args:
+            source_id (:obj:`str`): Source Table ID
+
+        Return:
+            :obj:`list` of :obj:`dict` with fields ``SOURCE_ID``, ``START_AGE``, ``END_AGE``, ``LOADED_FLAG``
+
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
     def load_log_data(self, source_id: str, start_age: int = None, end_age: int = None) -> bool:
         """ Public function
 
@@ -232,7 +247,7 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def alter_column(self, table_id: str, field_line: dict ) -> bool:
+    def alter_column(self, table_id: str, old_field_line: dict, new_field_line: dict) -> bool:
         """Public Function
 
         Changing size of an existed column. (if supported by database)
@@ -368,7 +383,7 @@ class DbapiAdaptor(Adaptor):
 
     def drop_table(self, source_id: str):
         table_info = self.get_ctrl_info(source_id)
-        if source_id not in [self._ctrl_table_id, self._ctrl_log_id]:
+        if source_id not in [self._ctrl_table_id, self._ctrl_log_id] and table_info.get('TABLE_ID', '') != '':
             table_id = table_info['TABLE_ID']
         else:
             table_id = source_id

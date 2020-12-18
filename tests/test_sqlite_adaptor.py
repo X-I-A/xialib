@@ -30,6 +30,7 @@ def test_simple_operation(adaptor):
         data_02 = json.load(fp)
     delete_list = [{"_AGE": 1, "id": 1, "first_name": "Naomi", "last_name": "Gumbrell", "_OP": 'D'}]
     update_list = [{"_AGE": 2, "id": 2, "first_name": "Rodge", "last_name": "Fratczak", "city": "Paris", "_OP": 'U'}]
+    assert adaptor.drop_table(table_id)
     assert adaptor.create_table(table_id, '20200101000000000000', {}, field_data)
     assert adaptor.upsert_data(table_id, field_data, data_02)
     c = adaptor.connection.cursor()
@@ -45,7 +46,7 @@ def test_simple_operation(adaptor):
     assert adaptor.upsert_data(table_id, field_data, update_list)
     c.execute(sql_upd_count)
     assert c.fetchone() == (1,)
-    assert adaptor.alter_column(table_id, dict())
+    assert adaptor.alter_column(table_id, {'type_chain': ['char', 'c_8']}, {'type_chain': ['char', 'c_9']})
     adaptor.set_ctrl_info(table_id, start_seq='20200101000000000000')
     line = adaptor.get_ctrl_info(table_id)
     assert line['START_SEQ'] == '20200101000000000000'
