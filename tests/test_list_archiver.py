@@ -33,8 +33,11 @@ def test_scenraio(archiver: IOListArchiver):
         src_file = str(x).zfill(6) + '.json'
         with open(os.path.join('.', 'input', 'person_complex', src_file), 'rb') as f:
             archiver.add_data(json.loads(f.read().decode()))
+    assert len(archiver.get_field_list()) == 12
     assert len(archiver.describe_single_field('id')['value']) == 10
+    assert archiver.describe_single_field('id')['type'] == 'number'
     assert len(archiver.describe_single_field('first_name')['value']) == 26
+    assert archiver.describe_single_field('first_name')['type'] == 'c_1'
     assert len(archiver.describe_single_field('last_name')['value']) == 26
     assert len(archiver.describe_single_field('email')['value']) == 26
     assert len(archiver.describe_single_field('gender')['value']) == 2
@@ -42,6 +45,7 @@ def test_scenraio(archiver: IOListArchiver):
     assert len(archiver.describe_single_field('birthday')['value']) == 10
     assert len(archiver.describe_single_field('weight')['value']) == 81
     assert len(archiver.describe_single_field('height')['value']) == 51
+    assert archiver.describe_single_field('height')['type'] == 'full'
     assert archiver.describe_single_field('children') == {}
     assert archiver.describe_single_field('dummy') == {}
     assert len(archiver.get_data()) == 3000

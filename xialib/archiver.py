@@ -61,7 +61,7 @@ class Archiver(metaclass=abc.ABCMeta):
             'full': map_full,
             'number': map_number
         }
-        for i in range(1, 21):
+        for i in range(1, 22):
             self.func_map['c_' + str(i)] = partial(map_string, nb=i)
 
     def set_current_topic_table(self, topic_id: str, table_id: str):
@@ -222,6 +222,15 @@ class Archiver(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
+    def get_field_list(self) -> List[str]:
+        """ To be implemented public function
+
+        This function will get all field of workspace
+
+        """
+        raise NotImplementedError  # pragma: no cover
+
+    @abc.abstractmethod
     def _get_list_by_field_name(self, field_name: str) -> list:
         raise NotImplementedError  # pragma: no cover
 
@@ -256,20 +265,20 @@ class Archiver(metaclass=abc.ABCMeta):
             descriptor['value'] = list(field_dist)
         elif len(field_types) == 1:
             if int in field_types or float in field_types:
-                descriptor['type'] = 'number'
                 field_dist = dict(Counter([self.func_map['number'](item) for item in field_data if item is not None]))
                 if len(field_dist) <= 88:
+                    descriptor['type'] = 'number'
                     descriptor['value'] = list(field_dist)
             elif str in field_types:
                 field_dist, old_field_dist = {}, {}
                 for i in range(1, 22):
+                    old_field_dist = field_dist
+                    mapped_field = [self.func_map['c_' + str(i)](item) for item in field_data if item is not None]
+                    field_dist = dict(Counter(mapped_field ))
                     if len(field_dist) > 88 and len(old_field_dist) > 0:
+                        descriptor['type'] = 'c_' + str(i-1)
                         descriptor['value'] = list(old_field_dist)
                         break
-                    old_field_dist = field_dist
-                    descriptor['type'] = 'c_' + str(i)
-                    mapped_field = [self.func_map[descriptor['type']](item) for item in field_data if item is not None]
-                    field_dist = dict(Counter(mapped_field ))
         return descriptor
 
 class ListArchiver(Archiver):
@@ -306,3 +315,9 @@ class ListArchiver(Archiver):
         if len(self.workspace) > 1:
             self._merge_workspace()
         return self.workspace[0].get(field_name, [])
+
+    def get_field_list(self):
+        result_set = set()
+        for workspace in self.workspace:
+            result_set |= set(workspace)
+        return list(result_set)
