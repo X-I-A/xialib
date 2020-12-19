@@ -1,8 +1,10 @@
 import abc
 import json
 import logging
-from typing import List, Dict
-from functools import reduce
+import math
+import struct
+from typing import List, Dict, Union
+from functools import reduce, partial
 from collections import Counter
 
 __all__ = ['Archiver']
@@ -42,6 +44,25 @@ class Archiver(metaclass=abc.ABCMeta):
             console_handler = logging.StreamHandler()
             console_handler.setFormatter(formatter)
             self.logger.addHandler(console_handler)
+
+        def map_full(ori_value):
+            return ori_value  # pragma: no cover
+
+        def map_number(ori_value: Union[int, float]) -> int:
+            [bits] = struct.unpack(">Q", struct.pack(">d", float(ori_value)))
+            bit_string = "{:064b}".format(bits)
+            exp = int(bit_string[1:12], 2)
+            return exp if bit_string[0] == '0' else exp * -1
+
+        def map_string(ori_value: str, nb: int) -> str:
+            return ori_value[:nb]
+
+        self.func_map = {
+            'full': map_full,
+            'number': map_number
+        }
+        for i in range(1, 21):
+            self.func_map['c_' + str(i)] = partial(map_string, nb=i)
 
     def set_current_topic_table(self, topic_id: str, table_id: str):
         """Public function
@@ -225,27 +246,30 @@ class Archiver(metaclass=abc.ABCMeta):
                 return {}
         descriptor['has_none'] = True if type(None) in field_types else False
         field_types.pop(type(None), None)
+        if not field_types:
+            descriptor['all_none'] = True  # pragma: no cover
+            return descriptor  # pragma: no cover
         field_dist = dict(Counter(field_data))
         field_dist.pop(None, None)
         if len(field_dist) <= 88:
-            descriptor['scope'] = 'full'
-            descriptor['type'] = 'list'
+            descriptor['type'] = 'full'
             descriptor['value'] = list(field_dist)
         elif len(field_types) == 1:
             if int in field_types or float in field_types:
-                descriptor['scope'] = 'full'
-                descriptor['type'] = 'range'
-                descriptor['value'] = [min(field_dist), max(field_dist)]
+                descriptor['type'] = 'number'
+                field_dist = dict(Counter([self.func_map['number'](item) for item in field_data if item is not None]))
+                if len(field_dist) <= 88:
+                    descriptor['value'] = list(field_dist)
             elif str in field_types:
                 field_dist, old_field_dist = {}, {}
                 for i in range(1, 22):
-                    if len(field_dist) >= 88 and len(old_field_dist) > 0:
-                        descriptor['scope'] = 'c_' + str(i)
-                        descriptor['type'] = 'list'
+                    if len(field_dist) > 88 and len(old_field_dist) > 0:
                         descriptor['value'] = list(old_field_dist)
                         break
                     old_field_dist = field_dist
-                    field_dist = dict(Counter([item[:i] for item in field_data if item is not None]))
+                    descriptor['type'] = 'c_' + str(i)
+                    mapped_field = [self.func_map[descriptor['type']](item) for item in field_data if item is not None]
+                    field_dist = dict(Counter(mapped_field ))
         return descriptor
 
 class ListArchiver(Archiver):

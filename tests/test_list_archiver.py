@@ -33,7 +33,7 @@ def test_scenraio(archiver: IOListArchiver):
         src_file = str(x).zfill(6) + '.json'
         with open(os.path.join('.', 'input', 'person_complex', src_file), 'rb') as f:
             archiver.add_data(json.loads(f.read().decode()))
-    assert len(archiver.describe_single_field('id')['value']) == 2
+    assert len(archiver.describe_single_field('id')['value']) == 10
     assert len(archiver.describe_single_field('first_name')['value']) == 26
     assert len(archiver.describe_single_field('last_name')['value']) == 26
     assert len(archiver.describe_single_field('email')['value']) == 26
@@ -89,3 +89,4 @@ def test_exceptions(archiver):
         a2 = IOListArchiver(archive_path='wrong path')
     with pytest.raises(TypeError):
         a2 = IOListArchiver(storer=object(), archive_path='wrong path')
+
