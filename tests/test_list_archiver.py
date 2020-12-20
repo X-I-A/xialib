@@ -49,6 +49,10 @@ def test_scenraio(archiver: IOListArchiver):
     assert archiver.describe_single_field('children') == {}
     assert archiver.describe_single_field('dummy') == {}
     assert len(archiver.get_data()) == 3000
+    desc1 = archiver.describe_relation('first_name', archiver.describe_single_field('first_name'),
+                                       'email', archiver.describe_single_field('email'), 2)
+    desc2 = archiver.describe_relation('first_name', archiver.describe_single_field('last_name'),
+                                       'email', archiver.describe_single_field('email'), 2)
     r = archiver.get_data()
     archive_name = archiver.archive_data()
     assert archive_name.endswith('.zst')
