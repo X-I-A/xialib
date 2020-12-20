@@ -1,7 +1,7 @@
 import abc
 import json
 import logging
-import math
+import itertools
 import struct
 from typing import List, Dict, Union
 from functools import reduce, partial
@@ -243,32 +243,37 @@ class Archiver(metaclass=abc.ABCMeta):
             field_name (:obj:`str`): field information stored in the table header
 
         Return:
-            Field description struction
+            Field description struction:
+                type: full, number or c_<n> (The first n characters)
+                value: Not None value ordered by frequency
+                ratio: present ratio
         """
         descriptor = {}
         field_data = self._get_list_by_field_name(field_name)
+        total_nb = len(field_data)
         if not field_data:
             return descriptor
         field_types = dict(Counter([type(field_item) for field_item in field_data]))
         for key, value in field_types.items():
             if key not in [type(None), str, int, float]:
                 return {}
-        descriptor['has_none'] = True if type(None) in field_types else False
+        descriptor['none_ratio'] = field_types.get(type(None), 0) / total_nb
         field_types.pop(type(None), None)
-        if not field_types:
-            descriptor['all_none'] = True  # pragma: no cover
-            return descriptor  # pragma: no cover
         field_dist = dict(Counter(field_data))
         field_dist.pop(None, None)
         if len(field_dist) <= 88:
             descriptor['type'] = 'full'
-            descriptor['value'] = list(field_dist)
+            descriptor['value'] = [k for k, v in sorted(field_dist.items(), key=lambda x: x[1], reverse=True)]
+            descriptor['ratio'] = [v / total_nb for k, v in sorted(field_dist.items(), key=lambda x: x[1],
+                                                                   reverse=True)]
         elif len(field_types) == 1:
             if int in field_types or float in field_types:
                 field_dist = dict(Counter([self.func_map['number'](item) for item in field_data if item is not None]))
                 if len(field_dist) <= 88:
                     descriptor['type'] = 'number'
-                    descriptor['value'] = list(field_dist)
+                    descriptor['value'] = [k for k, v in sorted(field_dist.items(), key=lambda x: x[1], reverse=True)]
+                    descriptor['ratio'] = [v / total_nb for k, v in sorted(field_dist.items(), key=lambda x: x[1],
+                                                                           reverse=True)]
             elif str in field_types:
                 field_dist, old_field_dist = {}, {}
                 for i in range(1, 22):
@@ -277,9 +282,30 @@ class Archiver(metaclass=abc.ABCMeta):
                     field_dist = dict(Counter(mapped_field ))
                     if len(field_dist) > 88 and len(old_field_dist) > 0:
                         descriptor['type'] = 'c_' + str(i-1)
-                        descriptor['value'] = list(old_field_dist)
+                        descriptor['value'] = [k for k, v in sorted(old_field_dist.items(), key=lambda x: x[1],
+                                                                    reverse=True)]
+                        descriptor['ratio'] = [v / total_nb for k, v in
+                                               sorted(old_field_dist.items(), key=lambda x: x[1], reverse=True)]
                         break
         return descriptor
+
+    def describe_relation(self, field1_name, field1_desc: dict, field2_name, field2_desc: dict, rank: int = 1) -> dict:
+        result = {}
+        field1_rank = min(rank, len(field1_desc['value']))
+        field2_rank = min(rank, len(field2_desc['value']))
+        field1_type = field1_desc['type']
+        field2_type = field2_desc['type']
+        field1_list = self._get_list_by_field_name(field1_name)
+        field2_list = self._get_list_by_field_name(field2_name)
+        field1_mapped_list = [self.func_map[field1_type](item) for item in field1_list if item is not None]
+        field2_mapped_list = [self.func_map[field2_type](item) for item in field2_list if item is not None]
+        total_nb = len(field1_list)
+        for cur_comb in itertools.product(range(field1_rank), range(field2_rank)):
+            f1_v = field1_desc['value'][cur_comb[0]]
+            f2_v = field2_desc['value'][cur_comb[1]]
+            ok_items = [(v1, v2) for v1, v2 in zip(field1_mapped_list, field2_mapped_list) if f1_v == v1 and f2_v == v2]
+            result[cur_comb] = len(ok_items) / total_nb
+        return result
 
 class ListArchiver(Archiver):
     data_encode = 'blob'
