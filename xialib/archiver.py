@@ -2,6 +2,7 @@ import abc
 import json
 import logging
 import itertools
+import random
 import struct
 from typing import List, Dict, Union
 from functools import reduce, partial
@@ -261,6 +262,14 @@ class Archiver(metaclass=abc.ABCMeta):
         field_types.pop(type(None), None)
         field_dist = dict(Counter(field_data))
         field_dist.pop(None, None)
+        descriptor['distinct_nb'] = len(field_dist)
+        descriptor['total_nb'] = len(field_data)
+        descriptor['min_value'] = min(list(field_dist))
+        descriptor['max_value'] = max(list(field_dist))
+        samples = set()
+        for i in range(8):
+           samples.add(random.choice(field_data))
+        descriptor['samples'] = list(samples)
         if len(field_dist) <= 88:
             descriptor['type'] = 'full'
             descriptor['value'] = [k for k, v in sorted(field_dist.items(), key=lambda x: x[1], reverse=True)]
