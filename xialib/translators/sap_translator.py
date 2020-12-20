@@ -55,7 +55,7 @@ class SapTranslator(Translator):
         if '@leng@' in ddic_parse[0]:
             ddic_parse[0] = ddic_parse[0].replace('@leng@', str(new_line['_LENG']))
         if '@decimals@' in ddic_parse[0]:
-            ddic_parse[0] = ddic_parse[0].replace('@decimals@', str(new_line['_DECIMALS']))
+            ddic_parse[0] = ddic_parse[0].replace('@decimals@', str(new_line.get('_DECIMALS', '0')))
         new_line['type_chain'] = self.get_type_chain(ddic_parse[0], ddic_parse[1])
         new_line['format'] = ddic_parse[1]
         new_line['encode'] = ddic_parse[2]
