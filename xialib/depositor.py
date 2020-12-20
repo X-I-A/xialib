@@ -81,6 +81,10 @@ class Depositor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     def _get_aged_data_chunk(self, header: dict, input_data: List[dict]) -> Generator[dict, None, None]:
+        if len(input_data) == 0:
+            zero_data = gzip.compress(json.dumps([]).encode())
+            yield {'header': header, 'data': zero_data, 'line_nb': 0}
+            return
         chunk_size = self.size_limit // 8
         chunk_number, raw_size, cur_age, line_no, nb, data_io, zipped_size, zipped_io = 0, 0, None, 0, 0, None, 0, None
         for line in input_data:
@@ -133,6 +137,10 @@ class Depositor(metaclass=abc.ABCMeta):
             yield {'header': chunk_header, 'data': chunk_data, 'line_nb': nb}
 
     def _get_normal_data_chunk(self, header: dict, input_data: List[dict]) -> Generator[dict, None, None]:
+        if len(input_data) == 0:
+            zero_data = gzip.compress(json.dumps([]).encode())
+            yield {'header': header, 'data': zero_data, 'line_nb': 0}
+            return
         chunk_size = self.size_limit // 8
         chunk_number, raw_size, cur_seq, line_no, nb, data_io, zipped_size, zipped_io = 0, 0, None, 0, 0, None, 0, None
         for line in input_data:

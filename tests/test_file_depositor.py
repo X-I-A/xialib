@@ -86,6 +86,9 @@ def test_add_aged_document(depositor):
             depositor.add_document(age_header, test_data)
             age_header['age'] = current_age + 1
             test_data = list()
+    age_header['age'] = 1000000
+    age_header.pop('end_age', None)
+    depositor.add_document(age_header, [])
 
     counter = 0
     for doc in depositor.get_stream_by_sort_key(status_list=['initial'],
@@ -128,6 +131,9 @@ def test_add_normal_document(depositor):
             normal_header['start_seq'] = start_seq
             depositor.add_document(normal_header, test_data)
             test_data = list()
+
+    normal_header['start_seq'] = '20201113222501000000'
+    depositor.add_document(normal_header, [])
 
     counter = 0
     doc = depositor.get_ref_by_merge_key('20201113222500065364')
@@ -194,10 +200,10 @@ def test_document_search(depositor):
         assert doc == '20201113222500000000.header'
         break
     for doc in depositor.get_stream_by_sort_key(reverse=True):
-        assert doc == '20201113222500001000-20201113222500001000.initial'
+        assert doc == '20201113222501000000-20201113222501000000.initial'
         break
     for doc in depositor.get_stream_by_sort_key(reverse=True, equal=False):
-        assert doc == '20201113222500001000-20201113222500001000.initial'
+        assert doc == '20201113222501000000-20201113222501000000.initial'
         break
     for doc in depositor.get_stream_by_sort_key(le_ge_key='20201113222500000999', reverse=True):
         assert doc == '20201113222500000993-20201113222500000993.initial'
