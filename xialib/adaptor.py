@@ -417,9 +417,6 @@ class DbapiAdaptor(Adaptor):
             return True
 
         log_table_id = self.get_log_table_id(source_id)
-        # If no need to create log table, the adaptor can return a None object
-        if log_table_id is None:
-            return True  # pragma: no cover
         if not self.create_table(source_id, start_seq, meta_data, field_data, True, log_table_id):
             self.logger.error("Log table creation Error: {}".format(log_table_id),
                               extra=self.log_context)  # pragma: no cover

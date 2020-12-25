@@ -71,7 +71,7 @@ class SapTranslator(Translator):
             line.pop('_RECNO')
         else:
             line['_NO'] = line.pop('_RECNO')
-            line['_OP'] = self.slt_op_dict.get(line.pop('IUUT_OPERAT_FLAG'))
+            line['_OP'] = self.slt_op_dict.get(line.pop('IUUC_OPERAT_FLAG'))
         return line
 
     def compile(self, header: dict, data: list):
