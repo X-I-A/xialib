@@ -4,7 +4,7 @@ import pytest
 from xialib import SapTranslator
 
 slt_init_load = [{'_RECNO': 1000, 'MANDT': '100', 'BUKRS': '1001'}]
-slt_transfer = [{'_RECNO': 1000, 'MANDT': '100', 'BUKRS': '1001', 'IUUT_OPERAT_FLAG': 'U'}]
+slt_transfer = [{'_RECNO': 1000, 'MANDT': '100', 'BUKRS': '1001', 'IUUC_OPERAT_FLAG': 'U'}]
 slt_init_header = {'age': '2', 'data_spec': 'slt', 'data': slt_init_load}
 slt_transfer_header = {'age': '2', 'data_spec': 'slt', 'data': slt_transfer}
 ddic_header = {'age': '1', 'data_spec': 'ddic', 'data': slt_init_load}

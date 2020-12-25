@@ -67,11 +67,11 @@ class SapTranslator(Translator):
 
     def _get_slt_line(self, line: dict, **kwargs):
         line['_AGE'] = int(kwargs['age'])
-        if 'IUUT_OPERAT_FLAG' not in line:
+        if 'IUUC_OPERAT_FLAG' not in line:
             line.pop('_RECNO')
         else:
             line['_NO'] = line.pop('_RECNO')
-            line['_OP'] = self.slt_op_dict.get(line.pop('IUUT_OPERAT_FLAG'))
+            line['_OP'] = self.slt_op_dict.get(line.pop('IUUC_OPERAT_FLAG'))
         return line
 
     def compile(self, header: dict, data: list):
