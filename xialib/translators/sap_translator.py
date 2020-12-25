@@ -67,7 +67,7 @@ class SapTranslator(Translator):
 
     def _get_slt_line(self, line: dict, **kwargs):
         line['_AGE'] = int(kwargs['age'])
-        if 'IUUT_OPERAT_FLAG' not in line:
+        if 'IUUC_OPERAT_FLAG' not in line:
             line.pop('_RECNO')
         else:
             line['_NO'] = line.pop('_RECNO')
