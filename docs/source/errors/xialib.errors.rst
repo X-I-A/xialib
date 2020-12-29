@@ -20,3 +20,5 @@ Error Code
 * XIA-000019: connection must an Connection defined by PEP249
 * XIA-000020: Adaptor : Data type chain not supported
 * XIA-000021: Ctrl Table search does not return the correct Table ID
+* XIA-000022: Can not guess header with empty data
+* XIA-000023: Can not guess unsupported data

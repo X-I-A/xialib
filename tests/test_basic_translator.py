@@ -1,9 +1,12 @@
 import os
 import json
+import gzip
 import pytest
 from xialib import BasicTranslator
 
 with open(os.path.join('.', 'input', 'person_complex', '000002.json'), 'rb') as f:
+    guess_body = json.loads(f.read().decode())
+    f.seek(0)
     data_body = json.loads(f.read().decode())
     age_header = {'age': '2', 'data': data_body}
     normal_header = {'start_seq': '2020111119150000000', 'data': data_body}
@@ -20,10 +23,21 @@ def translator():
     yield translator
 
 def test_simple_header(translator):
-    translator.compile(header, header['data'])
-    for line in header['data']:
+    translator.compile(header, guess_body)
+    for line in guess_body:
         result_line = translator.get_translated_line(line)
         assert result_line == line
+
+def test_artificial_header(translator):
+    artificial_guess_body = [{'field_1': 1.0}]
+    translator.compile(header, artificial_guess_body)
+    assert artificial_guess_body[0]['type_chain'] == ['real']
+    artificial_guess_body = [{'field_2': None}]
+    translator.compile(header, artificial_guess_body)
+    assert artificial_guess_body[0]['type_chain'] == ['char']
+    artificial_guess_body = [{'field_3': gzip.compress(b'Hello')}]
+    translator.compile(header, artificial_guess_body)
+    assert artificial_guess_body[0]['type_chain'] == ['blob']
 
 def test_xia_body(translator):
     translator.compile(xia_header, xia_header['data'])
@@ -69,3 +83,8 @@ def test_exceptions(translator):
     with pytest.raises(NotImplementedError):
         for line in header['data']:
             result_line = translator.get_translated_line(line)
+    with pytest.raises(ValueError):
+        translator.compile(header, [])
+    artificial_guess_body = [{'field_3': object()}]
+    with pytest.raises(ValueError):
+        translator.compile(header, artificial_guess_body)
