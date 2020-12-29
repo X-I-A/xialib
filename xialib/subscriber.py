@@ -108,4 +108,4 @@ class Subscriber(metaclass=abc.ABCMeta):
             If message servers recognize no difference between a reception without ack and an explict uack,
             just leave this function as is
         """
-        return True
+        return True  # pragma: no cover

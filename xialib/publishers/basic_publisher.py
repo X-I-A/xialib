@@ -1,6 +1,7 @@
 import os
 import uuid
 import json
+from datetime import datetime
 from xialib.publisher import Publisher
 
 class BasicPublisher(Publisher):
@@ -15,7 +16,7 @@ class BasicPublisher(Publisher):
         super().__init__()
 
     def _get_message_id(self) -> str:
-        return str(uuid.uuid4())
+        return datetime.now().strftime('%Y%m%d%H%M%S%f') + '-' + str(uuid.uuid4())
 
     def check_destination(self, destination: str, topic_id: str):
         if not os.path.exists(destination):
