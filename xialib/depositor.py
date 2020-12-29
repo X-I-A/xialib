@@ -187,7 +187,7 @@ class Depositor(metaclass=abc.ABCMeta):
         might be added to header
 
         Args:
-            header (:obj:`str`): Document Header
+            header (:obj:`dict`): Document Header
             data (:obj:`list` of :obj:`dict`): Data in Python dictioany list format
 
         Returns:

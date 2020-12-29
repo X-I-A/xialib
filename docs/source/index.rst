@@ -9,7 +9,7 @@ Welcome to xialib's documentation!
 xialib contains the definition of basic units of Xeed-Insight-Agent Solution
 
 .. toctree::
-   :maxdepth: 2
+   :maxdepth: 1
    :caption: Contents:
 
    xialib

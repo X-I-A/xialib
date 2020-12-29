@@ -1,5 +1,5 @@
-Error Codes
-===========
+Error Code
+==========
 
 * XIA-000001: Decoder is not able to decode the requested data_encode
 * XIA-000002: Decoder only accept ``str``, ``bytes`` or ``IO flow`` as input type
