@@ -17,6 +17,7 @@ To install it, simply run
    archivers/index
    decoders/index
    depositors/index
+   flowers/index
    formatters/index
    publishers/index
    storers/index
