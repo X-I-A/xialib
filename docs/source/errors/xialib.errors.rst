@@ -1,5 +1,5 @@
-Error Codes
-===========
+Error Code
+==========
 
 * XIA-000001: Decoder is not able to decode the requested data_encode
 * XIA-000002: Decoder only accept ``str``, ``bytes`` or ``IO flow`` as input type
@@ -20,3 +20,10 @@ Error Codes
 * XIA-000019: connection must an Connection defined by PEP249
 * XIA-000020: Adaptor : Data type chain not supported
 * XIA-000021: Ctrl Table search does not return the correct Table ID
+* XIA-000022: Can not guess header with empty data
+* XIA-000023: Can not guess unsupported data
+* XIA-000024: Wrong Configuration of Segment FLower
+* XIA-000025: Segment FLower default value cannot pass check
+* XIA-000026: Wrong Field List of Basic FLower
+* XIA-000027: Wrong Filters of Basic FLower
+* XIA-000028: Segment FLower can not have min/max and list constraints at the same time

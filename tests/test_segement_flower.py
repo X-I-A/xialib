@@ -1,0 +1,126 @@
+import os
+import json
+import pytest
+from xialib import SegmentFlower
+
+config_1 = None
+config_2 = {'id': '2', 'field_name': 'height', 'default': None, 'min': 180, 'type_chain': ['int']}
+config_3 = {'id': '3', 'field_name': 'height', 'default': None, 'max': 179, 'type_chain': ['int']}
+config_4 = {'id': '4', 'field_name': 'height', 'default': 153, 'list': [151, 152, 153, 154, 155, 156], 'type_chain': ['int']}
+config_5 = {'id': '5', 'field_name': 'height', 'default': None, 'min': 150, 'max': 159, 'type_chain': ['int']}
+config_6 = {'id': '6', 'field_name': 'height', 'default': 153, 'min': 150, 'max': 159, 'type_chain': ['int']}
+config_7 = {'id': '7', 'field_name': 'extra', 'default': 'p1', 'type_chain': ['char', 'c_2']}
+config_8 = {'id': '8', 'field_name': 'height', 'default': 156, 'list': [156, 157], 'type_chain': ['int']}
+config_9 = {'id': '9', 'field_name': 'height', 'default': 156, 'max': 190, 'type_chain': ['int']}
+config_10 = {'id': '10', 'field_name': 'height', 'default': 156, 'min': 152, 'type_chain': ['int']}
+config_11 = {'id': '11', 'field_name': 'height', 'default': None, 'min': 150, 'max': 200, 'type_chain': ['int']}
+ko_config_12 = {'id': '12', 'field_name': 'height', 'default': 149, 'min': 150, 'max': 200, 'type_chain': ['int']}
+ko_config_15 = {'id': '15', 'field_name': 'height', 'default': 161, 'min': 150, 'max': 160, 'type_chain': ['int']}
+ko_config_16 = {'id': '16', 'field_name': 'height', 'default': 161, 'list': [151, 152, 153, 154, 155, 156], 'type_chain': ['int']}
+ko_config_17 = {'id': '16', 'field_name': 'height', 'default': None, 'min': 150, 'list': [151, 152, 153, 154, 155, 156], 'type_chain': ['int']}
+
+with open(os.path.join('.', 'input', 'person_complex', '000002.json'), 'rb') as f:
+    body_data = json.loads(f.read().decode())
+with open(os.path.join('.', 'input', 'person_simple', 'schema.json'), 'rb') as f:
+    header_data = json.loads(f.read().decode())
+
+def test_flat_header_segment():
+    data_header = {'age': 1}
+    flr = SegmentFlower(config=config_1)
+    header, body = flr.proceed(data_header, header_data)
+    assert len(body) == 9
+
+def test_flat_body_segment():
+    data_header = {}
+    flr = SegmentFlower(config=config_1)
+    header, body = flr.proceed(data_header, body_data)
+    assert len(body) == 1000
+
+def test_fix_header_segment():
+    data_header = {'age': 1}
+    flr = SegmentFlower(config=config_1)
+    flr.set_params(config=config_7)
+    header, body = flr.proceed(data_header, header_data)
+    assert len(body) == 10
+    assert 'meta_data' not in data_header
+    assert len(header_data) == 9
+
+def test_fix_body_segment():
+    data_header = {}
+    flr = SegmentFlower(config=config_7)
+    header, body = flr.proceed(data_header, body_data)
+    for line in body:
+        assert line['extra'] == 'p1'
+    assert 'segment_id' in header
+    assert 'segment_id' not in data_header
+    assert len(body) == 1000
+
+def test_min_body_segment():
+    data_header = {}
+    flr = SegmentFlower(config=config_2)
+    header, body = flr.proceed(data_header, body_data)
+    assert 'segment_id' in header
+    assert 'segment_id' not in data_header
+    assert len(body) == 373
+
+def test_max_body_segment():
+    data_header = {}
+    flr = SegmentFlower(config=config_3)
+    header, body = flr.proceed(data_header, body_data)
+    assert 'segment_id' in header
+    assert 'segment_id' not in data_header
+    assert len(body) == 514
+
+def test_list_body_segment():
+    data_header = {}
+    flr = SegmentFlower(config=config_4)
+    header, body = flr.proceed(data_header, body_data)
+    assert 'segment_id' in header
+    assert 'segment_id' not in data_header
+    assert len(body) == 221
+
+def test_range_body_segment():
+    data_header = {}
+    flr = SegmentFlower(config=config_5)
+    header, body = flr.proceed(data_header, body_data)
+    assert 'segment_id' in header
+    assert 'segment_id' not in data_header
+    assert len(body) == 182
+
+def test_range_body_with_default_segment():
+    data_header = {}
+    flr = SegmentFlower(config=config_6)
+    header, body = flr.proceed(data_header, body_data)
+    assert 'segment_id' in header
+    assert 'segment_id' not in data_header
+    assert len(body) == 295
+
+def test_compatiblity():
+    flr = SegmentFlower()
+    assert not flr.check_comptabilbe(None)
+    flr = SegmentFlower(config=config_3)
+    assert flr.check_comptabilbe(config_2)
+    assert not flr.check_comptabilbe(config_3)
+    assert not flr.check_comptabilbe(config_4)
+    assert not flr.check_comptabilbe(config_7)
+    assert not flr.check_comptabilbe(config_5)
+    assert not flr.check_comptabilbe(config_9)
+    flr = SegmentFlower(config=config_4)
+    assert not flr.check_comptabilbe(config_6)
+    assert not flr.check_comptabilbe(config_8)
+    flr = SegmentFlower(config=config_2)
+    assert not flr.check_comptabilbe(config_10)
+    flr = SegmentFlower(config=config_11)
+    assert not flr.check_comptabilbe(config_3)
+
+def test_exceptions():
+    with pytest.raises(ValueError):
+        flr = SegmentFlower(config=object())
+    with pytest.raises(ValueError):
+        flr = SegmentFlower(config=ko_config_12)
+    with pytest.raises(ValueError):
+        flr = SegmentFlower(config=ko_config_15)
+    with pytest.raises(ValueError):
+        flr = SegmentFlower(config=ko_config_16)
+    with pytest.raises(ValueError):
+        flr = SegmentFlower(config=ko_config_17)
