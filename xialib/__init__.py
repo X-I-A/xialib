@@ -14,7 +14,7 @@ from xialib.archivers import IOListArchiver
 from xialib.decoders import BasicDecoder, ZipDecoder
 from xialib.depositors import FileDepositor
 from xialib.formatters import BasicFormatter, CSVFormatter, ZstFormatter
-from xialib.flowers import BasicFlower
+from xialib.flowers import BasicFlower, SegmentFlower
 from xialib.publishers import BasicPublisher
 from xialib.storers import BasicStorer
 from xialib.subscribers import BasicSubscriber
