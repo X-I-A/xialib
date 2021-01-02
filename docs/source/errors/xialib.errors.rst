@@ -16,7 +16,7 @@ Error Code
 * XIA-000015: File depositor must have a validated deposit_path
 * XIA-000016: Not enough age ranged defined for an aged flow
 * XIA-000017: Updated data is oversized
-* XIA-000018: storer must be type of IOStorer
+* XIA-000018: storer must be type of RWStorer
 * XIA-000019: connection must an Connection defined by PEP249
 * XIA-000020: Adaptor : Data type chain not supported
 * XIA-000021: Ctrl Table search does not return the correct Table ID

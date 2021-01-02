@@ -12,7 +12,7 @@ def storer():
     storer = BasicStorer()
     yield storer
 
-def test_simple_flow(storer):
+def test_simple_flow(storer: BasicStorer):
     data_copy1 = storer.read(file_path)
     for data_io in storer.get_io_stream(file_path):
         new_file = storer.write(data_io, dest_file)
@@ -23,5 +23,7 @@ def test_simple_flow(storer):
     assert storer.remove(dest_file)
     assert not storer.remove(dest_file)
     storer.write(data_copy1, dest_file)
+    for data_wb_io in storer.get_io_wb_stream(dest_file):
+        data_wb_io.write(data_copy1)
     storer.remove(dest_file)
     assert not storer.exists(dest_file)

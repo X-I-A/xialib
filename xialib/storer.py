@@ -137,7 +137,7 @@ class IOStorer(RWStorer):
 
     @abc.abstractmethod
     def get_io_wb_stream(self, location: str):
-        """ To be implemented optionaly function
+        """ To be implemented function
 
         The function to be implemented by customized storer to yield an IO Writable flow.
 
