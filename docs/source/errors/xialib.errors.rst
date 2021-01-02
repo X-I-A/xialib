@@ -28,3 +28,5 @@ Error Code
 * XIA-000027: Wrong Filters of Basic FLower
 * XIA-000028: Segment FLower can not have multiple constraints at the same time
 * XIA-000029: Segment Flower min or max missing in range configuration
+* XIA-000030: File Adapter needs a RWStorer
+* XIA-000031: File Adapter Store Location does not exists

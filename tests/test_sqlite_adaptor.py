@@ -68,6 +68,7 @@ def test_raw_operation(adaptor):
         item['_AGE'] = item['id']
         data_03.append(item)
     c = adaptor.connection.cursor()
+    assert adaptor.drop_table(table_id)
     assert adaptor.create_table(table_id, '20200101000000000000', {}, field_data, False, None)
     assert adaptor.insert_raw_data(log_table_id, field_data, data_03)
     c.execute(sql_raw_count)

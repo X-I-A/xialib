@@ -4,6 +4,7 @@ import sqlite3
 from typing import List
 from xialib.adaptor import DbapiQmarkAdaptor
 
+
 class SQLiteAdaptor(DbapiQmarkAdaptor):
     type_dict = {
         'NULL': ['null'],

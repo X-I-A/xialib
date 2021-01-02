@@ -1,14 +1,16 @@
 import abc
 import json
 import os
+import uuid
 import base64
 import gzip
 import logging
 from collections import Counter
 from xialib.flowers.segment_flower import SegmentFlower
+from xialib.storer import RWStorer
 from typing import List, Dict, Tuple, Union
 
-__all__ = ['Adaptor']
+__all__ = ['Adaptor', 'DbapiAdaptor', 'DbapiQmarkAdaptor', 'FileAdaptor']
 
 
 class Adaptor(metaclass=abc.ABCMeta):
@@ -229,16 +231,16 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def create_table(self, source_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
-                     raw_flag: bool, table_id: str) -> bool:
+    def create_table(self, table_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
+                     raw_flag: bool, source_id: str) -> bool:
         """Public Function
 
         Create a table with information provided by header message with specification x-i-a
 
         Args:
-            source_id (:obj:`str`): Source Table ID with format sysid.dbid.schema.table
-            start_seq (:obj:`str`): Start sequence ID
             table_id (:obj:`str`): Table ID with format sysid.dbid.schema.table
+            start_seq (:obj:`str`): Start sequence ID
+            source_id (:obj:`str`): Source Table ID with format sysid.dbid.schema.table
             meta_data (:obj:`dict`): Table related meta-data, such as Table description
             field_data (:obj:`list` of `dict`): Table field description
             raw_flag (:obj:`bool`): If the table contains internal fields (_AGE, _SEG, _NO, _OP)
@@ -500,11 +502,9 @@ class DbapiAdaptor(Adaptor):
                     return False  # pragma: no cover
         return True
 
-    def create_table(self, source_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
-                     raw_flag: bool, table_id: str):
+    def create_table(self, table_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
+                     raw_flag: bool, source_id: str):
         field_list = field_data.copy()
-        if table_id is None:
-            table_id = source_id
         cur = self.connection.cursor()
         if self._create_table_if_not_exists_check(table_id):
             sql = self._get_create_sql(table_id, meta_data, field_list, raw_flag)
@@ -552,7 +552,7 @@ class DbapiAdaptor(Adaptor):
             log_table_id = self.get_log_table_id(table_id, segment_id)
             assert isinstance(cur_segment_config, (dict, type(None)))
             self.drop_table(log_table_id)
-            if not self.create_table(source_id, start_seq, meta_data, field_data, True, log_table_id):
+            if not self.create_table(log_table_id, start_seq, meta_data, field_data, True, None):
                 self.logger.error("Log table creation Error: {}".format(log_table_id),
                                   extra=self.log_context)  # pragma: no cover
                 return False  # pragma: no cover
@@ -961,3 +961,57 @@ class DbapiQmarkAdaptor(DbapiAdaptor):
                                                        self._sql_safe(log_ctrl_table_name),
                                                        '?', '?',
                                                        '?')
+
+class FileAdaptor(Adaptor):
+    """Adaptor for exporting data to files
+
+    """
+    def __init__(self, storer: RWStorer, location: str, **kwargs):
+        super().__init__(**kwargs)
+        if not isinstance(storer, RWStorer):
+            self.logger.error("File Adapter needs a RWStorer", extra=self.log_context)
+            raise TypeError("XIA-000030")
+        if not storer.exists(location):
+            self.logger.error("Location does not exists", extra=self.log_context)
+            raise TypeError("XIA-000031")
+        else:
+            self.storer = storer
+            self.location = location
+
+    def _get_file_name(self, data: List[dict]):
+        min_age, min_seq = min([(int(line.get('_AGE', 0)), line.get('_SEQ', '')) for line in data])
+        return str(min_age).zfill(20) if min_age > 0 else min_seq
+
+    def _get_key_from_line(self, field_list: List[str], line: dict) -> Tuple:
+        return_list = list()
+        for key in field_list:
+            if key in line:
+                return_list.append(line[key])
+            else:  # pragma: no cover
+                return_list.append(None)  # pragma: no cover
+        return tuple(return_list)
+
+    def upsert_data(self, table_id: str, field_data: List[dict], data: List[dict], **kwargs):
+        return self.insert_raw_data(table_id, field_data, data)  # pragma: no cover
+
+    def create_table(self, table_id: str, start_seq: str, meta_data: dict, field_data: List[dict],
+                     raw_flag: bool, source_id: str):
+        return True  # pragma: no cover
+
+    def drop_table(self, table_id: str):
+        return True  # pragma: no cover
+
+    def get_ctrl_info_list(self, table_id: str):
+        return list()  # pragma: no cover
+
+    def set_ctrl_info(self, table_id: str, segment_id: str, **kwargs):
+        return True  # pragma: no cover
+
+    def get_log_info(self, table_id: str, segment_id: str):
+        return list()  # pragma: no cover
+
+    def purge_table(self, table_id: str, segment_config: Union[dict, None]):
+        return True  # pragma: no cover
+
+    def load_log_data(self, table_id: str, segment_id: str, start_age: int = None, end_age: int = None):
+        return True  # pragma: no cover

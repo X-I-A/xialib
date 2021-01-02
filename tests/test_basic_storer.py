@@ -3,6 +3,7 @@ import json
 import pytest
 from xialib import BasicStorer
 
+
 file_path = os.path.join('.', 'input', 'person_complex', 'schema.json')
 dest_file = os.path.join('.', 'input', 'module_specific', 'test.json')
 
