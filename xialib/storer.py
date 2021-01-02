@@ -64,6 +64,16 @@ class Storer(metaclass=abc.ABCMeta):
         """
         raise NotImplementedError  # pragma: no cover
 
+    def get_io_stream(self, location: str):
+        """ Return a fake IO stream
+
+        Args:
+            location (:obj:`str`): resource location
+
+        Yields:
+            :obj:`io.IOBase` : IO flow
+        """
+        yield io.BytesIO(self.read(location))  # pragma: no cover
 
 class RWStorer(Storer):
     @abc.abstractmethod
@@ -115,7 +125,7 @@ class IOStorer(RWStorer):
     def get_io_stream(self, location: str):
         """ To be implemented optionaly function
 
-        The function to be implemented by customized storer to yield an IO flow.
+        The function to be implemented by a real IO storer to yield an IO flow.
 
         Args:
             location (:obj:`str`): resource location
