@@ -1,3 +1,4 @@
+import io
 import json
 import base64
 import zipfile
@@ -5,7 +6,7 @@ import hashlib
 from typing import List, Dict
 from functools import reduce
 from xialib.archiver import ListArchiver
-from xialib.storer import IOStorer
+from xialib.storer import RWStorer
 from xialib.storers.basic_storer import BasicStorer
 
 class IOListArchiver(ListArchiver):
@@ -13,8 +14,8 @@ class IOListArchiver(ListArchiver):
     """
     def __init__(self, archive_path, storer=BasicStorer(), **kwargs):
         super().__init__()
-        if not isinstance(storer, IOStorer):
-            self.logger.error("storer must be type of IOStorer", extra=self.log_context)
+        if not isinstance(storer, RWStorer):
+            self.logger.error("storer must be type of RWStorer", extra=self.log_context)
             raise TypeError("XIA-000018")
         else:
             self.storer = storer
@@ -38,11 +39,14 @@ class IOListArchiver(ListArchiver):
 
     def _archive_data(self):
         archive_file_name = self.storer.join(self.table_path, self._get_filename(self.merge_key))
-        for write_io in self.storer.get_io_wb_stream(archive_file_name):
-            with zipfile.ZipFile(write_io, 'w', compression=zipfile.ZIP_DEFLATED) as f:
-                for key, value in self.workspace[0].items():
-                    item_name = base64.b32encode(key.encode()).decode()
-                    f.writestr(item_name, json.dumps(value, ensure_ascii=False))
+        write_io = io.BytesIO()
+        with zipfile.ZipFile(write_io, 'w', compression=zipfile.ZIP_DEFLATED) as f:
+            for key, value in self.workspace[0].items():
+                item_name = base64.b32encode(key.encode()).decode()
+                f.writestr(item_name, json.dumps(value, ensure_ascii=False))
+        write_io.flush()
+        self.storer.write(write_io, archive_file_name)
+        # for write_io in self.storer.get_io_wb_stream(archive_file_name):
         return archive_file_name
 
     def append_archive(self, append_merge_key: str, fields: List[str] = None):

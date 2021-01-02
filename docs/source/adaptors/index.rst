@@ -10,3 +10,5 @@ Adaptor is used to write the data into target database / files.
    dbapi_adaptor
    dbapi_qmark_adaptor
    sqlite_adaptor
+   file_adaptor
+   json_adaptor
