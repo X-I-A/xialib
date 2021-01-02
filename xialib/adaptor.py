@@ -440,7 +440,7 @@ class DbapiAdaptor(Adaptor):
             self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
             return False  # pragma: no cover
 
-        if raw_flag:
+        if raw_flag or table_id in [self._ctrl_table_id, self._ctrl_log_id]:
             return True
 
         ctrl_info_list = self.get_ctrl_info_list(table_id)

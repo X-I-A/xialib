@@ -23,12 +23,12 @@ def adaptor():
     #conn = sqlite3.connect(':memory:')
     conn = sqlite3.connect(os.path.join('.', 'test.sqlite'))
     adaptor = SQLiteAdaptor(connection=conn)
+    adaptor.drop_table(SQLiteAdaptor._ctrl_table_id)
+    adaptor.drop_table(SQLiteAdaptor._ctrl_log_id)
     adaptor.create_table(SQLiteAdaptor._ctrl_table_id, '', dict(), SQLiteAdaptor._ctrl_table, False, None)
     adaptor.create_table(SQLiteAdaptor._ctrl_log_id, '', dict(), SQLiteAdaptor._ctrl_log_table, False, None)
     adaptor.drop_table(table_id)
     yield adaptor
-    adaptor.drop_table(SQLiteAdaptor._ctrl_table_id)
-    adaptor.drop_table(SQLiteAdaptor._ctrl_log_id)
 
 def test_simple_operation(adaptor):
     with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
