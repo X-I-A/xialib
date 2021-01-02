@@ -17,6 +17,8 @@ class SQLiteAdaptor(DbapiQmarkAdaptor):
     create_sql_template = "CREATE TABLE IF NOT EXISTS {} ( {}, PRIMARY KEY( {} ))"
     # Variable Name: @table_name@
     drop_sql_template = "DROP TABLE IF EXISTS {}"
+    # Varuabke Bale; @table_name@, @field_type@
+    add_column_sql_template = "ALTER TABLE {} ADD {}"
 
     def _get_field_type(self, type_chain: list):
         for type in reversed(type_chain):

@@ -23,7 +23,8 @@ Error Code
 * XIA-000022: Can not guess header with empty data
 * XIA-000023: Can not guess unsupported data
 * XIA-000024: Wrong Configuration of Segment FLower
-* XIA-000025: Segment FLower default value cannot pass check
+* XIA-000025: Segment FLower default value error
 * XIA-000026: Wrong Field List of Basic FLower
 * XIA-000027: Wrong Filters of Basic FLower
-* XIA-000028: Segment FLower can not have min/max and list constraints at the same time
+* XIA-000028: Segment FLower can not have multiple constraints at the same time
+* XIA-000029: Segment Flower min or max missing in range configuration
