@@ -13,6 +13,10 @@ class JsonAdaptor(FileAdaptor):
         The correction reconstruction order is: Seq-1-D -> Seq-1-I -> Seq-2-D -> Seq-2-I
 
     """
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
+        self.storer = BasicStorer()
+
     def insert_raw_data(self, log_table_id: str, field_data: List[dict], data: List[dict], **kwargs):
         check_d, check_i = dict(), dict()
         file_name = self._get_file_name(data)

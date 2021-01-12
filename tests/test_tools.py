@@ -23,7 +23,7 @@ def get_secret(key: str):
     return 'Hello World'
 
 def test_get_single_object():
-    storer = get_object(secret_manager=get_secret, connection=conn, **config['adaptor'])
+    storer = get_object(secret_manager=get_secret, db=conn, **config['adaptor'])
 
 def test_get_object_list():
     storers = get_object_list({key: value for key, value in config.items() if key.startswith('storer.')})

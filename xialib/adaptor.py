@@ -382,14 +382,14 @@ class DbapiAdaptor(Adaptor):
                                    "( SELECT MAX(END_AGE) "
                                    "FROM {} WHERE TABLE_ID = {} AND SEGMENT_ID = {} AND LOADED_FLAG = {} ) ")
 
-    def __init__(self, connection, **kwargs):
+    def __init__(self, db, **kwargs):
         super().__init__(**kwargs)
         # Duck type check
-        if any([not hasattr(connection, method) for method in ['cursor', 'close', 'commit']]):
+        if any([not hasattr(db, method) for method in ['cursor', 'close', 'commit']]):
             self.logger.error("connection must an Connection defined by PEP249", extra=self.log_context)
             raise TypeError("XIA-000019")
         else:
-            self.connection = connection
+            self.connection = db
 
     def _sql_safe(self, input: str) -> str:
         return input.replace(';', '')
@@ -966,17 +966,9 @@ class FileAdaptor(Adaptor):
     """Adaptor for exporting data to files
 
     """
-    def __init__(self, storer: RWStorer, location: str, **kwargs):
+    def __init__(self, location: str, **kwargs):
         super().__init__(**kwargs)
-        if not isinstance(storer, RWStorer):
-            self.logger.error("File Adapter needs a RWStorer", extra=self.log_context)
-            raise TypeError("XIA-000030")
-        if not storer.exists(location):
-            self.logger.error("Location does not exists", extra=self.log_context)
-            raise TypeError("XIA-000031")
-        else:
-            self.storer = storer
-            self.location = location
+        self.location = location
 
     def _get_file_name(self, data: List[dict]):
         min_age, min_seq = min([(int(line.get('_AGE', 0)), line.get('_SEQ', '')) for line in data])

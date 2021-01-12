@@ -20,7 +20,7 @@ sql_upd_count = "SELECT COUNT(*) FROM simple_person WHERE city = 'Paris'"
 
 @pytest.fixture(scope='module')
 def adaptor():
-    adaptor = JsonAdaptor(storer=BasicStorer(), location=os.path.join('.', 'input', 'module_specific', 'adaptor'))
+    adaptor = JsonAdaptor(location=os.path.join('.', 'input', 'module_specific', 'adaptor'))
     yield adaptor
 
 def test_simple_operation(adaptor: JsonAdaptor):
@@ -35,9 +35,3 @@ def test_simple_operation(adaptor: JsonAdaptor):
     assert adaptor.drop_table(table_id)
     assert adaptor.create_table(table_id, '20200101000000000000', {}, field_data, False, None)
     assert adaptor.upsert_data(table_id, field_data, data_02)
-
-def test_exceptions():
-    with pytest.raises(TypeError):
-        adap = JsonAdaptor(storer=object(), location='.')
-    with pytest.raises(TypeError):
-        adap = JsonAdaptor(storer=BasicStorer(), location='err_location')
