@@ -19,6 +19,7 @@ from xialib.publishers import BasicPublisher
 from xialib.storers import BasicStorer
 from xialib.subscribers import BasicSubscriber
 from xialib.translators import BasicTranslator, SapTranslator
+from xialib.tools import get_object, get_object_dict, get_object_list
 
 __all__ = \
     adaptors.__all__ + \
@@ -32,4 +33,4 @@ __all__ = \
     subscribers.__all__ + \
     translators.__all__
 
-__version__ = "0.2.0"
+__version__ = "0.2.1"

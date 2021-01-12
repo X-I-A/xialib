@@ -22,7 +22,7 @@ sql_upd_count = "SELECT COUNT(*) FROM simple_person WHERE city = 'Paris'"
 def adaptor():
     #conn = sqlite3.connect(':memory:')
     conn = sqlite3.connect(os.path.join('.', 'test.sqlite'))
-    adaptor = SQLiteAdaptor(connection=conn)
+    adaptor = SQLiteAdaptor(db=conn)
     adaptor.drop_table(SQLiteAdaptor._ctrl_table_id)
     adaptor.drop_table(SQLiteAdaptor._ctrl_log_id)
     adaptor.create_table(SQLiteAdaptor._ctrl_table_id, '', dict(), SQLiteAdaptor._ctrl_table, False, None)
@@ -260,4 +260,4 @@ def test_list_segment(adaptor: SQLiteAdaptor):
 
 def test_exceptions():
     with pytest.raises(TypeError):
-        adap = SQLiteAdaptor(connection=object())
+        adap = SQLiteAdaptor(db=object())

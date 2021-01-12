@@ -95,6 +95,3 @@ def test_archive_zero_data(archiver: IOListArchiver):
 def test_exceptions(archiver):
     with pytest.raises(ValueError):
         a2 = IOListArchiver(archive_path='wrong path')
-    with pytest.raises(TypeError):
-        a2 = IOListArchiver(storer=object(), archive_path='wrong path')
-
