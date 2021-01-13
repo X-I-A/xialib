@@ -966,9 +966,17 @@ class FileAdaptor(Adaptor):
     """Adaptor for exporting data to files
 
     """
-    def __init__(self, location: str, **kwargs):
+    def __init__(self, fs: RWStorer, location: str, **kwargs):
         super().__init__(**kwargs)
-        self.location = location
+        if not isinstance(fs, RWStorer):
+            self.logger.error("File Adapter needs a RWStorer", extra=self.log_context)
+            raise TypeError("XIA-000030")
+        if not fs.exists(location):
+            self.logger.error("Location does not exists", extra=self.log_context)
+            raise TypeError("XIA-000031")
+        else:
+            self.storer = fs
+            self.location = location
 
     def _get_file_name(self, data: List[dict]):
         min_age, min_seq = min([(int(line.get('_AGE', 0)), line.get('_SEQ', '')) for line in data])

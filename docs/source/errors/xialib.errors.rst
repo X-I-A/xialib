@@ -30,3 +30,4 @@ Error Code
 * XIA-000029: Segment Flower min or max missing in range configuration
 * XIA-000030: File Adapter needs a RWStorer
 * XIA-000031: File Adapter Store Location does not exists
+* XIA-000032: GCSStorer Must have GCS based Filesystem

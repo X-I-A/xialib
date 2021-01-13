@@ -4,7 +4,7 @@ import datetime
 import json
 import pytest
 from xialib import IOListArchiver
-
+from xialib import BasicStorer
 
 def get_current_timestamp():
     return datetime.datetime.now().strftime('%Y%m%d%H%M%S%f')
@@ -21,7 +21,7 @@ field_list_01 = ['id', 'first_name', 'city', 'height', 'children', 'preferred_co
 
 @pytest.fixture(scope='module')
 def archiver():
-    archiver = IOListArchiver(archive_path=os.path.join('.', 'input', 'module_specific', 'archiver'))
+    archiver = IOListArchiver(archive_path=os.path.join('.', 'input', 'module_specific', 'archiver'), fs=BasicStorer())
     archiver.set_current_topic_table('test-001', 'person_complex')
     yield archiver
     os.rmdir(os.path.join(archiver.archive_path, 'test-001', 'person_complex'))
@@ -94,4 +94,6 @@ def test_archive_zero_data(archiver: IOListArchiver):
 
 def test_exceptions(archiver):
     with pytest.raises(ValueError):
-        a2 = IOListArchiver(archive_path='wrong path')
+        a2 = IOListArchiver(archive_path='wrong path', fs=BasicStorer())
+    with pytest.raises(TypeError):
+        a2 = IOListArchiver(fs=object(), archive_path='wrong path')
