@@ -7,15 +7,18 @@ from typing import List, Dict
 from functools import reduce
 from xialib.archiver import ListArchiver
 from xialib.storer import RWStorer
-from xialib.storers.basic_storer import BasicStorer
 
 class IOListArchiver(ListArchiver):
     """Basic List archiver use local file system to save archive data
     """
-    def __init__(self, archive_path: str, **kwargs):
-        super().__init__(**kwargs)
-        self.storer = BasicStorer()
-        self.data_store = self.storer.store_types[0]
+    def __init__(self, archive_path: str, fs: RWStorer, **kwargs):
+        super().__init__()
+        if not isinstance(fs, RWStorer):
+            self.logger.error("storer must be type of RWStorer", extra=self.log_context)
+            raise TypeError("XIA-000018")
+        else:
+            self.storer = fs
+            self.data_store = fs.store_types[0]
         if self.storer.exists(archive_path):
             self.archive_path = archive_path
         else:
