@@ -16,14 +16,12 @@ class IOListArchiver(ListArchiver):
         if not isinstance(fs, RWStorer):
             self.logger.error("storer must be type of RWStorer", extra=self.log_context)
             raise TypeError("XIA-000018")
-        else:
-            self.storer = fs
-            self.data_store = fs.store_types[0]
-        if self.storer.exists(archive_path):
-            self.archive_path = archive_path
-        else:
+        self.storer = fs
+        self.data_store = fs.store_types[0]
+        if not self.storer.exists(archive_path):
             self.logger.error("{} does not exist".format(archive_path), extra=self.log_context)
             raise ValueError("XIA-000012")
+        self.archive_path = archive_path
 
     def _get_filename(self, merge_key):
         return hashlib.md5(merge_key.encode()).hexdigest()[:4] + '-' + merge_key + '.zst'
