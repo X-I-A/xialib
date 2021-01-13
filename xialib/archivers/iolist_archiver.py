@@ -12,7 +12,7 @@ class IOListArchiver(ListArchiver):
     """Basic List archiver use local file system to save archive data
     """
     def __init__(self, archive_path: str, fs: RWStorer, **kwargs):
-        super().__init__()
+        super().__init__(**kwargs)
         if not isinstance(fs, RWStorer):
             self.logger.error("storer must be type of RWStorer", extra=self.log_context)
             raise TypeError("XIA-000018")
