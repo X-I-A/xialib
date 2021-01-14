@@ -22,6 +22,10 @@ class Service():
         self.log_context = {'context': ''}
         self.logger.setLevel(self.log_level)
 
+        self.decoder, self.formatter, self.translator, self.subscriber = None, None, None, None
+        self.depositor, self.archiver, self.storer, self.publisher = None, None, None, None
+        self.flower, self.adaptor = None, None
+
         for module_type in self.MODULE_TYPE_LIST:
             if module_type in kwargs:
                 module_object = kwargs[module_type]
