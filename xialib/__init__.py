@@ -35,18 +35,6 @@ from xialib.service import Service, service_factory, backlog
 
 
 __all__ = \
-    service.__all__ + \
-    adaptor.__all__ + \
-    archiver.__all__ + \
-    decoder.__all__ + \
-    depositor.__all__ + \
-    flower.__all__ + \
-    formatter.__all__ + \
-    publisher.__all__ + \
-    storer.__all__ + \
-    subscriber.__all__ + \
-    translator.__all__ + \
-    adaptors.__all__ + \
     archivers.__all__ + \
     decoders.__all__ + \
     depositors.__all__ + \
