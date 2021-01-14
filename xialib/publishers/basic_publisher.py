@@ -12,8 +12,6 @@ class BasicPublisher(Publisher):
     """
     blob_support = False
 
-    def __init__(self):
-        super().__init__()
 
     def _get_message_id(self) -> str:
         return datetime.now().strftime('%Y%m%d%H%M%S%f') + '-' + str(uuid.uuid4())

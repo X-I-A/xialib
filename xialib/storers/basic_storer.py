@@ -7,8 +7,6 @@ class BasicStorer(IOStorer):
     """
     store_types = ['file']
 
-    def __init__(self):
-        super().__init__()
 
     def exists(self, location: str):
         if os.path.exists(location):

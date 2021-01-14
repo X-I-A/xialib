@@ -1,4 +1,5 @@
 import io
+import os
 import json
 import base64
 import zipfile
@@ -11,19 +12,26 @@ from xialib.storer import RWStorer
 class IOListArchiver(ListArchiver):
     """Basic List archiver use local file system to save archive data
     """
-    def __init__(self, archive_path: str, fs: RWStorer, **kwargs):
-        super().__init__()
+    def __init__(self, fs: RWStorer, **kwargs):
+        super().__init__(**kwargs)
         if not isinstance(fs, RWStorer):
             self.logger.error("storer must be type of RWStorer", extra=self.log_context)
             raise TypeError("XIA-000018")
+        self.storer = fs
+        self.data_store = fs.store_types[0]
+        if "archive_path" not in kwargs:
+            self.archive_path = self._get_default_archive_path()
         else:
-            self.storer = fs
-            self.data_store = fs.store_types[0]
-        if self.storer.exists(archive_path):
-            self.archive_path = archive_path
-        else:
-            self.logger.error("{} does not exist".format(archive_path), extra=self.log_context)
-            raise ValueError("XIA-000012")
+            if not self.storer.exists(kwargs['archive_path']):
+                self.logger.error("{} does not exist".format(kwargs['archive_path']), extra=self.log_context)
+                raise ValueError("XIA-000012")
+            self.archive_path = kwargs['archive_path']
+
+    def _get_default_archive_path(self):
+        archive_path = os.path.join('.', 'archiver')
+        if not os.path.exists(archive_path):
+            os.mkdir(archive_path)  # pragma: no cover
+        return archive_path
 
     def _get_filename(self, merge_key):
         return hashlib.md5(merge_key.encode()).hexdigest()[:4] + '-' + merge_key + '.zst'

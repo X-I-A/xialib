@@ -9,9 +9,6 @@ class ZipDecoder(Decoder):
     """
     supported_encodes = ['zip']
 
-    def __init__(self):
-        super().__init__()
-
     def _encode_to_blob(self, data_or_io, from_encode, **kwargs):
         # IO to IO
         if isinstance(data_or_io, io.IOBase):
