@@ -1,0 +1,27 @@
+{
+    "_module": "xialib",
+    "_class": "Service",
+    "depositor": {
+        "_type": "object",
+        "_class": "FileDepositor",
+        "_module": "xialib",
+        "deposit_path": "."
+    },
+    "archiver": {
+        "_type": "object",
+        "_class": "IOListArchiver",
+        "_module": "xialib",
+        "fs": {
+            "_type": "global",
+            "_name": "basicstorer"
+        }
+    },
+    "publisher": {
+        "pubsub": {
+            "_type": "object",
+            "_class": "BasicPublisher",
+            "_module": "xialib"
+        }
+    },
+    "_type": "object"
+}

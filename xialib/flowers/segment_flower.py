@@ -13,8 +13,8 @@ class SegmentFlower(Flower):
 
     """
 
-    def __init__(self, config: Union[dict, None] = None):
-        super().__init__(config=config)
+    def __init__(self, config: Union[dict, None] = None, **kwargs):
+        super().__init__(config=config, **kwargs)
         self.check_config(config)
         self.config = config
 

@@ -9,8 +9,6 @@ class BasicFormatter(Formatter):
     """
     support_formats = ['list', 'record']
 
-    def __init__(self):
-        super().__init__()
 
     def list_to_record(self, data: dict):
         if not data:

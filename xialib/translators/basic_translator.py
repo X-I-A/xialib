@@ -14,8 +14,6 @@ class BasicTranslator(Translator):
     """
     spec_list = ['x-i-a']
 
-    def __init__(self):
-        super().__init__()
 
     def _get_origin_line(self, line: dict, **kwargs) -> dict:
         return line

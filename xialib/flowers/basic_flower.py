@@ -37,8 +37,8 @@ class BasicFlower(Flower):
             '!=': xia_ne,
             '<>': xia_ne}
 
-    def __init__(self, field_list: list = ALL_FIELDS, filters: List[List[list]] = NO_FILTER):
-        super().__init__(field_list=field_list, filters=filters)
+    def __init__(self, field_list: list = ALL_FIELDS, filters: List[List[list]] = NO_FILTER, **kwargs):
+        super().__init__(field_list=field_list, filters=filters, **kwargs)
         self.check_params(field_list, filters)
         self.field_list = field_list
         self.filters = filters

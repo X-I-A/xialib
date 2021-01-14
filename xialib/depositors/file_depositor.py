@@ -11,14 +11,21 @@ class FileDepositor(Depositor):
     size_limit = 2 ** 20
     file_type = {'initial': '.initial', 'merged': '.merged', 'packaged': '.packaged'}
 
-    def __init__(self, deposit_path, **kwargs):
-        super().__init__()
-        if os.path.exists(deposit_path):
-            self.archive_path = deposit_path
+    def __init__(self, deposit_path=None, **kwargs):
+        super().__init__(**kwargs)
+        if deposit_path is None:
+            self.deposit_path = self._get_default_deposit_path()
         else:
-            self.logger.error("{} does not exist".format(deposit_path), extra=self.log_context)
-            raise ValueError("XIA-000015")
-        self.deposit_path = deposit_path
+            if not os.path.exists(deposit_path):
+                self.logger.error("{} does not exist".format(deposit_path), extra=self.log_context)
+                raise ValueError("XIA-000015")
+            self.deposit_path = deposit_path
+
+    def _get_default_deposit_path(self):
+        deposite_path = os.path.join('.', 'deposit')
+        if not os.path.exists(deposite_path):
+            os.mkdir(deposite_path)  # pragma: no cover
+        return deposite_path
 
     def _get_ref_from_filename(self, filename):
         file = filename.split('.')[0]

@@ -253,6 +253,9 @@ def test_error_3(depositor):
     assert not depositor.get_table_header()
     assert not depositor.merge_documents('20201113222500000780', 1)
 
+def test_default_path():
+    default_depo = FileDepositor()
+
 def test_exceptions(depositor):
     with pytest.raises(ValueError):
         d = FileDepositor(deposit_path='wrong_path')

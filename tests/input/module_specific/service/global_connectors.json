@@ -1,0 +1,9 @@
+{
+    "basicstorer": {
+        "_type": "object",
+        "_module": "xialib",
+        "_class": "BasicStorer",
+        "user": "test",
+        "password": "${{pwd}}"
+    }
+}

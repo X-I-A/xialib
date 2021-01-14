@@ -42,8 +42,8 @@ class SapTranslator(Translator):
         'M': 'D',
     }
 
-    def __init__(self):
-        super().__init__()
+    def __init__(self, **kwargs):
+        super().__init__(**kwargs)
         self.line_oper = dict()
 
     def _get_ddic_line(self, line: dict, **kwargs):
