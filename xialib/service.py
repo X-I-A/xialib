@@ -102,6 +102,6 @@ def backlog(func):
                      'trace': traceback.format_exc()}]
             if format(e)[:3] in ['XIA', 'INS', 'XED', 'AGT']:
                 header['table_id'] = exception_msg
-            Service.trigger_backlog(header, body)
+            a.trigger_backlog(header, body)
             return True
     return wrapper
