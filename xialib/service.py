@@ -41,7 +41,6 @@ class Service():
                         raise TypeError("XIA-000033")
                 setattr(self, module_type, module_object)
 
-
     @classmethod
     def trigger_backlog(cls, header: dict, error_body: List[dict]):
         pass
