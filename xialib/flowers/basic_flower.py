@@ -39,19 +39,19 @@ class BasicFlower(Flower):
 
     def __init__(self, field_list: list = ALL_FIELDS, filters: List[List[list]] = NO_FILTER, **kwargs):
         super().__init__(field_list=field_list, filters=filters, **kwargs)
-        self.check_params(field_list, filters)
-        self.field_list = field_list
-        self.filters = filters
+        self.field_list = self.ALL_FIELDS if field_list is None else field_list
+        self.filters = self.NO_FILTER if filters is None else filters
+        self.check_params(self.field_list, self.filters)
 
     # disjunctive normal form filters (DNF)
     @classmethod
-    def _filter_dnf(cls, line: dict, ndf_filters):
+    def filter_dnf(cls, line: dict, ndf_filters):
         return any([all([cls.oper.get(l2[1])(line.get(l2[0], None), l2[2]) for l2 in l1 if len(l2) > 0])
                     for l1 in ndf_filters])
 
     # retrieve list of keys from
     @classmethod
-    def _filter_column(cls, line: dict, field_list):
+    def filter_column(cls, line: dict, field_list):
         return {key: value for key, value in line.items() if key in field_list}
 
     # Get dnf filter field set
@@ -66,13 +66,13 @@ class BasicFlower(Flower):
 
     @classmethod
     def filter_table_dnf(cls, dict_list, ndf_filters):
-        return [line for line in dict_list if cls._filter_dnf(line, ndf_filters)]
+        return [line for line in dict_list if cls.filter_dnf(line, ndf_filters)]
 
     @classmethod
     def filter_table_column(cls, dict_list: list, field_list):
         if field_list:
             field_list.extend(cls.XIA_FIELDS)
-        return [cls._filter_column(line, field_list) for line in dict_list]
+        return [cls.filter_column(line, field_list) for line in dict_list]
 
     @classmethod
     def filter_table(cls, dict_list: list, field_list=ALL_FIELDS, filter_list=NO_FILTER):

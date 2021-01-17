@@ -32,3 +32,4 @@ Error Code
 * XIA-000031: File Adapter Store Location does not exists
 * XIA-000032: GCSStorer Must have GCS based Filesystem
 * XIA-000033: Module type must match module name
+* XIA-000034: Insight ID not validated
