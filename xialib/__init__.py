@@ -32,7 +32,7 @@ from xialib.subscriber import Subscriber
 from xialib.translator import Translator
 
 from xialib.service import Service, service_factory, backlog
-
+from xialib.configurator import Configurator
 
 __all__ = \
     archivers.__all__ + \
@@ -45,4 +45,4 @@ __all__ = \
     subscribers.__all__ + \
     translators.__all__
 
-__version__ = "0.2.6"
+__version__ = "0.2.7"
