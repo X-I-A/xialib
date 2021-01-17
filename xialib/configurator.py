@@ -24,6 +24,8 @@ class Configurator():
     @abc.abstractmethod
     def set_insight_config(self, config: dict):
         """Public Function
+
+        Set insight level configurations
         """
         raise NotImplementedError
 
@@ -33,6 +35,10 @@ class Configurator():
 
     @abc.abstractmethod
     def set_data_route(self, topic_id: str, table_id: str, data_route: dict):
+        """Public Function
+
+        Set data route for each data source.
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
