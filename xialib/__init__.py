@@ -45,4 +45,4 @@ __all__ = \
     subscribers.__all__ + \
     translators.__all__
 
-__version__ = "0.2.7"
+__version__ = "0.2.8"

@@ -6,14 +6,11 @@ __all__ = ['Configurator']
 class Configurator():  # pragma: no cover
     """Save all configurations
     """
-    def __init__(self, insight_id: str):
-        if self.validate_insight(insight_id):
-            self.insight_id = insight_id
-        else:
-            raise ValueError("XIA-000034")
+    def __init__(self, insight_id: str, **kwargs):
+        self.insight_id = insight_id
 
-    @abc.abstractclassmethod
-    def validate_insight(cls, insight_id: str) -> bool:
+    @abc.abstractmethod
+    def validate_insight(self) -> bool:
         """Public Function
 
         Attributes:
@@ -31,6 +28,11 @@ class Configurator():  # pragma: no cover
 
     @abc.abstractmethod
     def get_insight_config(self) -> dict:
+        """Public Function
+
+        Get insight configuration of section `global`, `library` and `services`,
+
+        """
         raise NotImplementedError
 
     @abc.abstractmethod
@@ -42,10 +44,6 @@ class Configurator():  # pragma: no cover
         raise NotImplementedError
 
     @abc.abstractmethod
-    def get_service(self, service_name: str = None) -> dict:
-        raise NotImplementedError
-
-    @abc.abstractmethod
     def set_library(self, library: dict):
         """Public Function
 
@@ -53,9 +51,6 @@ class Configurator():  # pragma: no cover
         """
         raise NotImplementedError
 
-    @abc.abstractmethod
-    def get_library(self) -> dict:
-        raise NotImplementedError
 
     @abc.abstractmethod
     def set_data_route(self, topic_id: str, table_id: str, data_route: dict):
