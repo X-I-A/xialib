@@ -7,7 +7,6 @@ from xialib import BasicStorer
 def get_secret(key: str):
     return 'Hello World'
 
-
 def test_service_factory():
     test_file_path = os.path.join('.', 'input', 'module_specific', 'service')
     with open(os.path.join(test_file_path, 'global_connectors.json'), 'r', encoding='utf-8') as fp:

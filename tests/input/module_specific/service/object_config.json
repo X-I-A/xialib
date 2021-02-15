@@ -9,7 +9,7 @@
     },
     "archiver": {
         "_type": "object",
-        "_class": "IOListArchiver",
+        "_class": "IoListArchiver",
         "_module": "xialib",
         "fs": {
             "_type": "global",
