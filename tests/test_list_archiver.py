@@ -3,7 +3,7 @@ import time
 import datetime
 import json
 import pytest
-from xialib import IOListArchiver
+from xialib import IoListArchiver
 from xialib import BasicStorer
 
 def get_current_timestamp():
@@ -21,13 +21,13 @@ field_list_01 = ['id', 'first_name', 'city', 'height', 'children', 'preferred_co
 
 @pytest.fixture(scope='module')
 def archiver():
-    archiver = IOListArchiver(archive_path=os.path.join('.', 'input', 'module_specific', 'archiver'), fs=BasicStorer())
+    archiver = IoListArchiver(archive_path=os.path.join('.', 'input', 'module_specific', 'archiver'), fs=BasicStorer())
     archiver.set_current_topic_table('test-001', 'person_complex')
     yield archiver
     os.rmdir(os.path.join(archiver.archive_path, 'test-001', 'person_complex'))
     os.rmdir(os.path.join(archiver.archive_path, 'test-001'))
 
-def test_scenraio(archiver: IOListArchiver):
+def test_scenraio(archiver: IoListArchiver):
     archiver.set_merge_key(merge_key_1)
     for x in range(2,5):
         src_file = str(x).zfill(6) + '.json'
@@ -82,7 +82,7 @@ def test_scenraio(archiver: IOListArchiver):
 
     archiver.remove_archives([merge_key_1, merge_key_2, merge_key_3])
 
-def test_archive_zero_data(archiver: IOListArchiver):
+def test_archive_zero_data(archiver: IoListArchiver):
     archiver.set_merge_key(merge_key_4)
     archiver.add_data([])
     archiver.archive_data()
@@ -94,6 +94,6 @@ def test_archive_zero_data(archiver: IOListArchiver):
 
 def test_exceptions(archiver):
     with pytest.raises(ValueError):
-        a2 = IOListArchiver(archive_path='wrong path', fs=BasicStorer())
+        a2 = IoListArchiver(archive_path='wrong path', fs=BasicStorer())
     with pytest.raises(TypeError):
-        a2 = IOListArchiver(fs=object(), archive_path='wrong path')
+        a2 = IoListArchiver(fs=object(), archive_path='wrong path')

@@ -1,3 +1,3 @@
-from xialib.archivers.iolist_archiver import IOListArchiver
+from xialib.archivers.iolist_archiver import IoListArchiver
 
-__all__ = ['IOListArchiver']
+__all__ = ['IoListArchiver']

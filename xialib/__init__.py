@@ -10,7 +10,7 @@ from xialib import subscribers
 from xialib import translators
 
 from xialib.adaptors import SQLiteAdaptor, JsonAdaptor
-from xialib.archivers import IOListArchiver
+from xialib.archivers import IoListArchiver
 from xialib.decoders import BasicDecoder, ZipDecoder
 from xialib.depositors import FileDepositor
 from xialib.formatters import BasicFormatter, CSVFormatter, ZstFormatter
@@ -32,7 +32,6 @@ from xialib.subscriber import Subscriber
 from xialib.translator import Translator
 
 from xialib.service import Service, service_factory, backlog
-from xialib.configurator import Configurator
 
 __all__ = \
     archivers.__all__ + \
@@ -45,4 +44,4 @@ __all__ = \
     subscribers.__all__ + \
     translators.__all__
 
-__version__ = "0.2.7"
+__version__ = "0.2.9"

@@ -9,7 +9,7 @@ from functools import reduce
 from xialib.archiver import ListArchiver
 from xialib.storer import RWStorer
 
-class IOListArchiver(ListArchiver):
+class IoListArchiver(ListArchiver):
     """Basic List archiver use local file system to save archive data
     """
     def __init__(self, fs: RWStorer, **kwargs):
