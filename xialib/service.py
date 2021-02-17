@@ -57,6 +57,7 @@ def service_factory(service_config, global_dict=None, secret_manager=None):
         The secrets, such as API key, password, should have the format `{{key}}`. secret_manager will get its value
 
     """
+    service_config = service_config.copy()
     if global_dict is None:
         global_dict = {}
     if isinstance(service_config, dict):
