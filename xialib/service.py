@@ -45,13 +45,14 @@ class Service():
     def trigger_backlog(cls, header: dict, error_body: List[dict]):
         pass
 
+
 def service_factory(service_config, global_dict=None, secret_manager=None):
     """ Object Factory: Create service by using configuration json
 
     Args:
         service_config (:obj:`str`): json structure
         global_dict (:obj:`str`): objects which should be configured as global object
-        secrect_manager (:obj:`callable`): Any callable object to get the value by using key
+        secret_manager (:obj:`callable`): Any callable object to get the value by using key
 
     Notes:
         The secrets, such as API key, password, should have the format `{{key}}`. secret_manager will get its value
@@ -60,6 +61,7 @@ def service_factory(service_config, global_dict=None, secret_manager=None):
     if global_dict is None:
         global_dict = {}
     if isinstance(service_config, dict):
+        service_config = service_config.copy()
         if service_config.get('_type', '') == 'object':
             module_name = importlib.import_module(service_config.pop('_module'))
             class_type = getattr(module_name, service_config.pop('_class'))
@@ -76,6 +78,15 @@ def service_factory(service_config, global_dict=None, secret_manager=None):
         return secret_manager(service_config.strip()[3:-2].strip())
     else:
         return service_config
+
+def secret_composer(raw_string: str, secret_manager=None) -> str:
+    if callable(secret_manager):
+        p0 = [unit.split("}}") for unit in raw_string.split("${{")]
+        p1 = map(lambda l: ([secret_manager(l[0].strip()), None] if len(l) > 1 else [l[0]]) + l[1:], p0[1:])
+        p2 = list(map(lambda l: "${{" + l[0] if len(l) == 1 else l[0] + "}}".join(l[2:]), p1))
+        return "".join(["}}".join(p0[0])] + p2)
+    else:
+        return raw_string
 
 def backlog(func):
     """Send all errors to backlog
