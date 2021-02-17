@@ -1,7 +1,7 @@
 import os
 import json
 import pytest
-from xialib import Service, service_factory, backlog
+from xialib import Service, service_factory, backlog, secret_composer
 from xialib import BasicStorer
 
 def get_secret(key: str):
@@ -20,6 +20,16 @@ def test_service_factory():
         assert isinstance(global_dict.get('basicstorer'), BasicStorer)
         assert global_dict.get('basicstorer') == service_object.archiver.storer
 
+def test_secret_composer():
+    assert secret_composer("${{pwd}}") == "${{pwd}}"
+    assert secret_composer("${{pwd}}", get_secret) == "Hello World"
+    assert secret_composer("${{ pwd }}", get_secret) == "Hello World"
+    assert secret_composer("${{pwd}}1", get_secret) == "Hello World1"
+    assert secret_composer("1${{pwd}}1", get_secret) == "1Hello World1"
+    assert secret_composer("1${{pwd", get_secret) == "1${{pwd"
+    assert secret_composer("pwd}}1", get_secret) == "pwd}}1"
+    assert secret_composer("1${{pwd}}${{pwd}}1", get_secret) == "1Hello WorldHello World1"
+    assert secret_composer("1${{${{pwd}}}}1", get_secret) == "1${{Hello World}}1"
 
 def test_backlog():
     srv = Service()

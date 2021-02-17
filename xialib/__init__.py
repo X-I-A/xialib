@@ -31,7 +31,7 @@ from xialib.storer import Storer, RWStorer, IOStorer
 from xialib.subscriber import Subscriber
 from xialib.translator import Translator
 
-from xialib.service import Service, service_factory, backlog
+from xialib.service import Service, service_factory, backlog, secret_composer
 
 __all__ = \
     archivers.__all__ + \
