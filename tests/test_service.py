@@ -19,6 +19,10 @@ def test_service_factory():
         assert isinstance(service_object, Service)
         assert isinstance(global_dict.get('basicstorer'), BasicStorer)
         assert global_dict.get('basicstorer') == service_object.archiver.storer
+        service_object = service_factory(service_config, global_dict, get_secret)
+        assert isinstance(service_object, Service)
+        assert isinstance(global_dict.get('basicstorer'), BasicStorer)
+        assert global_dict.get('basicstorer') == service_object.archiver.storer
 
 def test_secret_composer():
     assert secret_composer("${{pwd}}") == "${{pwd}}"
