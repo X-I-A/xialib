@@ -25,8 +25,8 @@ def adaptor():
     adaptor = SQLiteAdaptor(db=conn)
     adaptor.drop_table(SQLiteAdaptor._ctrl_table_id)
     adaptor.drop_table(SQLiteAdaptor._ctrl_log_id)
-    adaptor.create_table(SQLiteAdaptor._ctrl_table_id, '', dict(), SQLiteAdaptor._ctrl_table, False, None)
-    adaptor.create_table(SQLiteAdaptor._ctrl_log_id, '', dict(), SQLiteAdaptor._ctrl_log_table, False, None)
+    adaptor.create_table(SQLiteAdaptor._ctrl_table_id, '', dict(), SQLiteAdaptor._ctrl_table, False, "")
+    adaptor.create_table(SQLiteAdaptor._ctrl_log_id, '', dict(), SQLiteAdaptor._ctrl_log_table, False, "")
     adaptor.drop_table(table_id)
     yield adaptor
 
@@ -57,7 +57,7 @@ def test_log_operation(adaptor):
     log_data = [{'TABLE_ID': '...person_simple', 'SEGMENT_ID': '', 'START_AGE': 2, 'END_AGE': 3, 'LOADED_FLAG': ''},
                 {'TABLE_ID': '...person_simple', 'SEGMENT_ID': '', 'START_AGE': 4, 'END_AGE': 5, 'LOADED_FLAG': ''}]
     assert adaptor.upsert_data(adaptor._ctrl_log_id, adaptor._ctrl_log_table, log_data)
-    results = adaptor.get_log_info('...person_simple', '')
+    results = adaptor.get_log_info('...person_simple')
     assert len(results) == 2
 
 def test_raw_operation(adaptor):

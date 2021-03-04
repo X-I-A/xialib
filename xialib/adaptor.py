@@ -170,7 +170,7 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def get_log_info(self, table_id: str, segment_id: str) -> List[dict]:
+    def get_log_info(self, table_id: str, segment_id: str = "") -> List[dict]:
         """Public function
 
         This function will return the related table entry of log_info_table
@@ -682,7 +682,7 @@ class DbapiAdaptor(Adaptor):
                 self.logger.error("SQL Error: {}".format(e), extra=self.log_context)  # pragma: no cover
                 return False  # pragma: no cover
 
-    def get_log_info(self, table_id: str, segment_id: str):
+    def get_log_info(self, table_id: str, segment_id: str = ""):
         cur = self.connection.cursor()
         sql = self._get_log_info_sql()
         try:
@@ -1007,7 +1007,7 @@ class FileAdaptor(Adaptor):
     def set_ctrl_info(self, table_id: str, segment_id: str, **kwargs):
         return True  # pragma: no cover
 
-    def get_log_info(self, table_id: str, segment_id: str):
+    def get_log_info(self, table_id: str, segment_id: str = ""):
         return list()  # pragma: no cover
 
     def purge_table(self, table_id: str, segment_config: Union[dict, None]):
