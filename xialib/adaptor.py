@@ -187,7 +187,7 @@ class Adaptor(metaclass=abc.ABCMeta):
         raise NotImplementedError  # pragma: no cover
 
     @abc.abstractmethod
-    def load_log_data(self, table_id: str, segment_id: str, start_age: int = None, end_age: int = None) -> bool:
+    def load_log_data(self, table_id: str, start_age: int = None, end_age: int = None, segment_id: str = "") -> bool:
         """ Public function
 
         This function will load the data saved in raw table (log usage) into target table
@@ -699,7 +699,7 @@ class DbapiAdaptor(Adaptor):
             return_list.append(return_line)
         return return_list
 
-    def load_log_data(self, table_id: str, segment_id: str, start_age: int = None, end_age: int = None):
+    def load_log_data(self, table_id: str, start_age: int = None, end_age: int = None, segment_id: str = ""):
         table_info = self.get_ctrl_info(table_id, segment_id)
         raw_table_id = table_info['LOG_TABLE_ID']
         field_data = table_info['FIELD_LIST']
@@ -1013,5 +1013,5 @@ class FileAdaptor(Adaptor):
     def purge_table(self, table_id: str, segment_config: Union[dict, None]):
         return True  # pragma: no cover
 
-    def load_log_data(self, table_id: str, segment_id: str, start_age: int = None, end_age: int = None):
+    def load_log_data(self, table_id: str, start_age: int = None, end_age: int = None, segment_id: str = ""):
         return True  # pragma: no cover
