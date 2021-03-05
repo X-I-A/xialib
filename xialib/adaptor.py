@@ -972,7 +972,7 @@ class FileAdaptor(Adaptor):
             self.logger.error("File Adapter needs a RWStorer", extra=self.log_context)
             raise TypeError("XIA-000030")
         if not fs.exists(location):
-            self.logger.error("Location does not exists", extra=self.log_context)
+            self.logger.error("Location {} does not exists".format(location), extra=self.log_context)
             raise TypeError("XIA-000031")
         else:
             self.storer = fs
