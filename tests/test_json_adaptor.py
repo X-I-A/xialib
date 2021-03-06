@@ -39,6 +39,13 @@ def test_simple_operation(adaptor: JsonAdaptor):
     log_table_id = ctrl_info.get('LOG_TABLE_ID', '')
     assert log_table_id == table_id
 
+def test_no_field_desc(adaptor: JsonAdaptor):
+    with open(os.path.join('.', 'input', 'person_simple', '000002.json'), encoding='utf-8') as fp:
+        data_02 = json.load(fp)
+    for line in data_02:
+        line['_AGE'] = line['id'] + 1
+    assert adaptor.upsert_data(table_id, None, data_02)
+
 def test_exceptions():
     with pytest.raises(TypeError):
         adap = JsonAdaptor(fs=object(), location='.')
