@@ -33,7 +33,7 @@ def test_simple_operation(adaptor: JsonAdaptor):
     data_02.extend(delete_list)
     data_02.extend(update_list)
     assert adaptor.drop_table(table_id)
-    assert adaptor.create_table(table_id, '20200101000000000000', {}, field_data, False, None)
+    assert adaptor.create_table(table_id, '20200101000000000000', {}, field_data, False, "")
     assert adaptor.upsert_data(table_id, field_data, data_02)
 
 def test_exceptions():

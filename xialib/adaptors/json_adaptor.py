@@ -15,8 +15,9 @@ class JsonAdaptor(FileAdaptor):
         check_d, check_i = dict(), dict()
         file_name = self._get_file_name(data)
         key_list = [item['field_name'] for item in field_data if item['key_flag']]
-        if not self.storer.exists(self.storer.join(self.location, log_table_id)):
-            self.storer.mkdir(self.storer.join(self.location, log_table_id))  # pragma: no cover
+        log_table_path = [i if i else "default" for i in log_table_id.split(".")]
+        if not self.storer.exists(self.storer.join(self.location, *log_table_path)):
+            self.storer.mkdir(self.storer.join(self.location, *log_table_path))  # pragma: no cover
         data = sorted(data,
                       key = lambda k: (k.get('_AGE', None), k.get('_SEQ', None), k.get('_NO', None)),
                       reverse=True)
