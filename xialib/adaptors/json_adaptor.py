@@ -1,4 +1,5 @@
 import json
+from functools import reduce
 from typing import List, Union
 from xialib.adaptor import FileAdaptor
 
@@ -17,7 +18,11 @@ class JsonAdaptor(FileAdaptor):
     def insert_raw_data(self, log_table_id: str, field_data: List[dict], data: List[dict], **kwargs):
         check_d, check_i = dict(), dict()
         file_name = self._get_file_name(data)
-        key_list = [item['field_name'] for item in field_data if item['key_flag']]
+        if field_data:
+            key_list = [item['field_name'] for item in field_data if item['key_flag']]
+        else:
+            all_fields = reduce(lambda x, y: x | y, [set(line) for line in data])
+            key_list = [field for field in all_fields if not field.startswith("_")]
         log_table_path = [i if i else "default" for i in log_table_id.split(".")]
         if not self.storer.exists(self.storer.join(self.location, *log_table_path)):
             self.storer.mkdir(self.storer.join(self.location, *log_table_path))  # pragma: no cover
