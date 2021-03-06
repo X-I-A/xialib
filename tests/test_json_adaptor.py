@@ -35,6 +35,9 @@ def test_simple_operation(adaptor: JsonAdaptor):
     assert adaptor.drop_table(table_id)
     assert adaptor.create_table(table_id, '20200101000000000000', {}, field_data, False, "")
     assert adaptor.upsert_data(table_id, field_data, data_02)
+    ctrl_info = adaptor.get_ctrl_info(table_id)
+    log_table_id = ctrl_info.get('LOG_TABLE_ID', '')
+    assert log_table_id == table_id
 
 def test_exceptions():
     with pytest.raises(TypeError):
