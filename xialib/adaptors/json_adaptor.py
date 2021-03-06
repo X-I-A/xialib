@@ -42,11 +42,11 @@ class JsonAdaptor(FileAdaptor):
                 check_i[key_descr] = line
                 check_d[key_descr] = ''
         if check_d:
-            d_file_name = self.storer.join(self.location, log_table_id, file_name + '-D.json')
+            d_file_name = self.storer.join(self.location, *log_table_path, file_name + '-D.json')
             d_content = [{key: value for key, value in zip(key_list, line)} for line in check_d]
             self.storer.write(json.dumps(d_content, ensure_ascii=False).encode(), d_file_name)
         if check_i:
-            i_file_name = self.storer.join(self.location, log_table_id, file_name + '-I.json')
+            i_file_name = self.storer.join(self.location, *log_table_path, file_name + '-I.json')
             i_content = json.dumps([value for key, value in check_i.items()], ensure_ascii=False).encode()
             self.storer.write(i_content, i_file_name)
         return True
