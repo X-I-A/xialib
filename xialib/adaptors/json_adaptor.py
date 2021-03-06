@@ -15,8 +15,9 @@ class JsonAdaptor(FileAdaptor):
         check_d, check_i = dict(), dict()
         file_name = self._get_file_name(data)
         key_list = [item['field_name'] for item in field_data if item['key_flag']]
-        if not self.storer.exists(self.storer.join(self.location, log_table_id)):
-            self.storer.mkdir(self.storer.join(self.location, log_table_id))  # pragma: no cover
+        log_table_path = [i if i else "default" for i in log_table_id.split(".")]
+        if not self.storer.exists(self.storer.join(self.location, *log_table_path)):
+            self.storer.mkdir(self.storer.join(self.location, *log_table_path))  # pragma: no cover
         data = sorted(data,
                       key = lambda k: (k.get('_AGE', None), k.get('_SEQ', None), k.get('_NO', None)),
                       reverse=True)
@@ -41,11 +42,11 @@ class JsonAdaptor(FileAdaptor):
                 check_i[key_descr] = line
                 check_d[key_descr] = ''
         if check_d:
-            d_file_name = self.storer.join(self.location, log_table_id, file_name + '-D.json')
+            d_file_name = self.storer.join(self.location, *log_table_path, file_name + '-D.json')
             d_content = [{key: value for key, value in zip(key_list, line)} for line in check_d]
             self.storer.write(json.dumps(d_content, ensure_ascii=False).encode(), d_file_name)
         if check_i:
-            i_file_name = self.storer.join(self.location, log_table_id, file_name + '-I.json')
+            i_file_name = self.storer.join(self.location, *log_table_path, file_name + '-I.json')
             i_content = json.dumps([value for key, value in check_i.items()], ensure_ascii=False).encode()
             self.storer.write(i_content, i_file_name)
         return True

@@ -42,7 +42,7 @@ class BasicStorer(IOStorer):
             return False
 
     def mkdir(self, path: str):
-        os.mkdir(path)
+        os.makedirs(path, exist_ok=True)
 
     def get_io_stream(self, location: str):
         with open(location, 'rb') as fp:
