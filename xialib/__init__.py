@@ -34,6 +34,7 @@ from xialib.translator import Translator
 from xialib.service import Service, service_factory, backlog, secret_composer
 
 __all__ = \
+    adaptors.__all__ + \
     archivers.__all__ + \
     decoders.__all__ + \
     depositors.__all__ + \
